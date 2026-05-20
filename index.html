@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        // Force trailing slash on directory-like URLs to prevent relative path breakage in subfolder hosting (e.g. GitHub Pages)
+        (function() {
+            var path = window.location.pathname;
+            if (!path.endsWith('/')) {
+                var lastSegment = path.substring(path.lastIndexOf('/') + 1);
+                if (lastSegment && !lastSegment.includes('.')) {
+                    window.location.replace(window.location.protocol + '//' + window.location.host + path + '/' + window.location.search + window.location.hash);
+                }
+            }
+        })();
+    </script>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Preconnect to CDNs & external domains for faster resource loading -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <script>
+        // Prevent unintended banner/hero flicker during initial redirect.
+        // Only redirect to splash once per session.
+        // If splash is already seen, do NOT redirect again.
+        if (!sessionStorage.getItem('splashSeen')) {
+            sessionStorage.setItem('splashSeen', 'true');
+            window.location.href = "splash.html";
+        }
+    </script>
+    <title>Event Ticket Booking</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* ====== CUSTOM CINEMATIC CURSOR ====== */
+        body {
+            cursor: none;
+        }
+        .custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--netflix-red, #e50914);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+            z-index: 10000;
+            transition: width 0.2s, height 0.2s, background-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+            will-change: transform;
+        }
+        .custom-cursor-dot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate3d(-100px, -100px, 0) translate(-50%, -50%);
+            z-index: 10001;
+            box-shadow: 0 0 5px #fff;
+            will-change: transform;
+        }
+
+        /* ====== AI ASSISTANT CHATBOT ====== */
+        .ai-chatbot {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            font-family: 'Inter', sans-serif;
+        }
+        .chatbot-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e50914, #b20710);
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            box-shadow: 0 10px 20px rgba(229, 9, 20, 0.4);
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chatbot-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+        }
+        .chatbot-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 320px;
+            height: 400px;
+            background: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform-origin: bottom right;
+            transform: scale(0);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+        .chatbot-window.active {
+            transform: scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .chatbot-header {
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.5);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #fff;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chatbot-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+        }
+        .chatbot-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-msg {
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .msg-ai {
+            background: rgba(255,255,255,0.1);
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            color: #eee;
+        }
+        .msg-user {
+            background: var(--netflix-red, #e50914);
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+            color: #fff;
+        }
+        .chatbot-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.3);
+        }
+        .chatbot-input input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 8px 12px;
+            outline: none;
+        }
+        .chatbot-input button {
+            background: transparent;
+            border: none;
+            color: var(--netflix-red, #e50914);
+            cursor: pointer;
+            padding: 0 10px;
+        }
+
+        /* ====== SOCIAL PROOF NOTIFICATIONS ====== */
+        .social-proof-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(10px);
+            border-left: 4px solid var(--netflix-red, #e50914);
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateX(-150%);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 9998;
+        }
+        .social-proof-toast.show {
+            transform: translateX(0);
+        }
+        .social-proof-icon {
+            font-size: 1.5rem;
+            color: #ffc107;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNavbar">
+        <div class="container-fluid px-4">
+
+            <!-- BRAND -->
+            <a class="navbar-brand fw-bold" href="#">Event<span style="color:#fff">Nest</span></a>
+
+            <!-- Bootstrap collapse toggler (mobile) -->
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu"
+                aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navMenu">
+
+                <!-- NAV LINKS (left side) -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link active">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#events" class="nav-link">Events</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#about" class="nav-link">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#contact" class="nav-link">Contact</a>
+                    </li>
+                </ul>
+
+                <!-- SEARCH BAR -->
+                <div class="d-flex align-items-center me-3 navbar-search">
+                    <div class="search-wrapper">
+                        <i class="bi bi-search search-icon"></i>
+                        <input class="navbar-search-input" type="search" placeholder="Search events or movies"
+                            id="searchInput" onkeyup="searchEvent()">
+                    </div>
+                </div>
+
+                <!-- THEME TOGGLE -->
+                <button id="theme-toggle" class="btn btn-outline-light me-3 border-0" style="background: rgba(255,255,255,0.1); border-radius: 50%; width: 38px; height: 38px; padding: 0; display: flex; align-items: center; justify-content: center;"><i class="bi bi-moon-stars"></i></button>
+
+                <!-- CITY SELECT -->
+                <select class="navbar-city-select me-3" id="citySelect">
+                    <option selected value="">📍 Select City</option>
+                    <option>Mumbai</option>
+                    <option>Delhi</option>
+                    <option>Bangalore</option>
+                    <option>Hyderabad</option>
+                    <option>Chennai</option>
+                    <option>Kolkata</option>
+                    <option>Pune</option>
+                    <option>Ahmedabad</option>
+                    <option>Jaipur</option>
+                    <option>Surat</option>
+                    <option>Lucknow</option>
+                    <option>Nagpur</option>
+                    <option>Indore</option>
+                    <option>Chandigarh</option>
+                </select>
+
+                <!-- PROFILE DROPDOWN -->
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="profileDropdown"
+                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="profile-avatar"><i class="bi bi-person-fill"></i></span>
+                            <span id="navbarUsername">Profile</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end navbar-dropdown" aria-labelledby="profileDropdown">
+                            <li id="loginOption">
+                                <a class="dropdown-item" href="login.html"><i class="bi bi-box-arrow-in-right me-2"></i>Login</a>
+                            </li>
+                            <li id="logoutOption" class="d-none">
+                                <a class="dropdown-item text-danger" href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i>Logout</a>
+                            </li>
+                            <li id="ticketsOption" class="d-none">
+                                <a class="dropdown-item" href="my_tickets.html"><i class="bi bi-ticket-perforated me-2"></i>My Tickets</a>
+                            </li>
+                            <li id="usernameOption" class="d-none">
+                                <a class="dropdown-item" href="#" onclick="changeUsername()"><i class="bi bi-pencil me-2"></i>Change Username</a>
+                            </li>
+                            <li id="addressOption" class="d-none">
+                                <a class="dropdown-item" href="#" onclick="changeAddress()"><i class="bi bi-geo-alt me-2"></i>Change Address</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+
+            </div>
+
+            <!-- SIDE PANEL TRIGGER — always visible, outside collapse -->
+            <button class="menu-btn ms-3" onclick="openMenu()" title="Open Menu" id="sideMenuBtn">
+                <i class="bi bi-list"></i>
+            </button>
+
+        </div>
+    </nav>
+
+    <!-- SIDE MENU PANEL — outside nav so Bootstrap collapse doesn't affect it -->
+    <div id="sideMenu" class="side-menu">
+        <div class="menu-header">
+            <h4>Hey!</h4>
+            <button onclick="closeMenu()">✖</button>
+        </div>
+        <div class="menu-item">
+            🎁 Unlock special offers
+            <button class="login-btn" onclick="goToLogin()">Login / Register</button>
+        </div>
+        <div class="menu-item" onclick="openNotifications()">🔔 Notifications</div>
+        <div class="menu-item" onclick="openOrders()">🧾 Your Orders</div>
+        <div class="menu-item" onclick="openStream()">🎬 Stream Library</div>
+        <div class="menu-item" onclick="openCredit()">💳 Play Credit Card</div>
+        <div class="menu-item" onclick="openHelp()">💬 Help & Support</div>
+        <div class="menu-item" onclick="openSettings()">⚙️ Accounts & Settings</div>
+        <div class="menu-item" onclick="window.location.href='rewards.html'">🎁 Rewards</div>
+        <div class="menu-item" onclick="window.location.href='rewards.html'">🔄 BookAChange</div>
+    </div>
+
+
+    <!-- ================= HERO SECTION ================= -->
+    <section class="hero text-center text-white shared-section">
+        <style>
+            @keyframes heroFadeUp {
+                0% { opacity: 0; transform: translateY(40px); filter: blur(4px); }
+                100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+            }
+            .hero-animated-1 { animation: heroFadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.2s both; }
+            .hero-animated-2 { animation: heroFadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.4s both; }
+            .hero-animated-3 { 
+                animation: heroFadeUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.6s both; 
+                transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+            }
+            .hero-animated-3:hover {
+                transform: translateY(-3px) scale(1.05);
+                box-shadow: 0 10px 25px rgba(255, 193, 7, 0.4);
+            }
+        </style>
+        <div class="container">
+            <h1 class="display-4 fw-bold hero-animated-1">Book Your Favorite Events & Movies</h1>
+            <p class="lead hero-animated-2">Concerts • Seminars • College Fest • Workshops • Movies</p>
+            <a href="#events" class="btn btn-warning btn-lg hero-animated-3">Explore Events & Movies</a>
+        </div>
+    </section>
+
+    <!-- ================= EVENTS SECTION ================= -->
+    <section id="events" class="container mb-5 shared-section" style="scroll-margin-top: 90px; margin-top: 40px;">
+
+        <h2 class="section-title">Upcoming <span>Events</span> & Movies</h2>
+        <div class="row g-4" id="main-events-container">
+
+            <!-- Event Card 1 -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="images/c_hero.jpg" class="card-img-top" alt="Live Concert" onerror="this.onerror=null; this.src='images/main_hero.png';">
+                    <div class="card-body">
+                        <h5 class="card-title">Live Concert</h5>
+                        <p class="card-text">Experience an unforgettable night with top artists performing live.</p>
+                        <a href="concerts.html" class="btn btn-warning">
+                            Book Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Card 2 -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="images/s_hero.jpg" class="card-img-top" alt="Tech Seminar" onerror="this.onerror=null; this.src='images/main_hero.png';">
+                    <div class="card-body">
+                        <h5 class="card-title">Tech Seminar</h5>
+                        <p class="card-text">Join industry experts for a day of insightful talks and networking.</p>
+                        <a href="seminars.html" class="btn btn-warning">Book Now</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Card 3 -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="images/w_hero.jpg" class="card-img-top" alt="Creative Workshop" onerror="this.onerror=null; this.src='images/main_hero.png';">
+                    <div class="card-body">
+                        <h5 class="card-title">Creative Workshop</h5>
+                        <p class="card-text">Unleash your creativity with hands-on sessions led by experts.</p>
+                        <a href="workshops.html" class="btn btn-warning">Book Now</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Movie Ticket Card -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="images/main_hero.png" class="card-img-top" alt="Movies" onerror="this.onerror=null; this.src='images/main_hero.png';">
+                    <div class="card-body">
+                        <h5 class="card-title">Movies</h5>
+                        <p class="card-text">Grab tickets for the latest blockbusters at your nearest theater.</p>
+                        <a href="movies.html" class="btn btn-warning">Book Now</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cricket Tournament -->
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <img src="images/cricket_banner.png" class="card-img-top" alt="Cricket Tournament" onerror="this.onerror=null; this.src='images/main_hero.png';">
+                    <div class="card-body">
+                        <h5 class="card-title">Cricket Tournament</h5>
+                        <p class="card-text">Watch the best cricket matches in a thrilling tournament format.</p>
+                        <a href="cricket.html" class="btn btn-warning">Book Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= ABOUT SECTION ================= -->
+    <section id="about" class="container mb-5 shared-section" style="scroll-margin-top: 90px; margin-top: 40px;">
+        <h2 class="section-title">About <span>Us</span></h2>
+        <div class="about-panel">
+            <div class="row align-items-center">
+                <div class="col-md-6 about-content">
+                    <h3 class="mb-4" style="color: #fff;">Pioneering the Future of Events</h3>
+                    <p>
+                        EventBook is the ultimate online ticket booking platform designed to help users
+                        book tickets for events and movies effortlessly. Explore concerts,
+                        seminars, workshops, and movie shows with an immersive and smooth booking experience.
+                    </p>
+                    <p>
+                        Our mission is to bring you closer to the action, with real-time updates and seamless interactions. Welcome to the next generation of event management.
+                    </p>
+                </div>
+                <div class="col-md-6 text-center mt-4 mt-md-0">
+                    <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30" class="img-fluid rounded shadow" onerror="this.onerror=null; this.src='images/c_hero.jpg';">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= CONTACT SECTION ================= -->
+    <section id="contact" class="container mb-5 shared-section" style="scroll-margin-top: 90px; margin-top: 40px;">
+        <h2 class="section-title">Get in <span>Touch</span></h2>
+        
+        <div class="contact-panel">
+            <div class="row">
+                <div class="col-md-5 mb-4 mb-md-0 d-flex flex-column justify-content-center">
+                    <h3 class="mb-4" style="color: #fff;">Contact Information</h3>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-geo-alt-fill fs-3 me-3" style="color: var(--netflix-red);"></i>
+                        <div>
+                            <h5 class="mb-0 text-white">Location</h5>
+                            <p class="text-muted mb-0">Santacruz West, Mumbai</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-envelope-fill fs-3 me-3" style="color: var(--netflix-red);"></i>
+                        <div>
+                            <h5 class="mb-0 text-white">Email</h5>
+                            <p class="text-muted mb-0">support@eventbook.com</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-telephone-fill fs-3 me-3" style="color: var(--netflix-red);"></i>
+                        <div>
+                            <h5 class="mb-0 text-white">Phone</h5>
+                            <p class="text-muted mb-0">+91 98765 43210</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-7">
+                    <form>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <input type="text" class="form-control" placeholder="Your Name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <input type="email" class="form-control" placeholder="Your Email" required>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control mb-3" placeholder="Subject" required>
+                        <textarea class="form-control mb-3" rows="5" placeholder="Your Message" required></textarea>
+                        
+                        <button class="btn btn-warning w-100" type="submit">
+                            <i class="bi bi-send-fill me-2"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="bg-dark text-white text-center p-3">
+        <p>© 2026 EventBook | Online Ticket Booking System</p>
+    </footer>
+
+    <!-- AI CHATBOT & SOCIAL PROOF UI -->
+    <div class="social-proof-toast" id="socialProofToast">
+        <i class="bi bi-lightning-charge-fill social-proof-icon"></i>
+        <span id="proofText">Someone just booked a ticket!</span>
+    </div>
+
+    <div class="ai-chatbot">
+        <button class="chatbot-btn" onclick="toggleChat()">
+            <i class="bi bi-robot"></i>
+        </button>
+        <div class="chatbot-window" id="chatbotWindow">
+            <div class="chatbot-header">
+                <span><i class="bi bi-robot me-2"></i> EventNest AI</span>
+                <button class="chatbot-close" onclick="toggleChat()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="chatbot-body" id="chatBody">
+                <div class="chat-msg msg-ai">Hi there! How can I help you find your next experience today?</div>
+            </div>
+            <div class="chatbot-input">
+                <input type="text" id="chatInput" placeholder="Ask me anything..." onkeypress="if(event.key === 'Enter') sendChat()">
+                <button onclick="sendChat()"><i class="bi bi-send-fill"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vanilla Tilt for 3D Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ================= NAVBAR SCROLL EFFECT =================
+        window.addEventListener('scroll', function () {
+            const navbar = document.getElementById('mainNavbar');
+            if (window.scrollY > 60) {
+                navbar.classList.add('navbar-scrolled');
+            } else {
+                navbar.classList.remove('navbar-scrolled');
+            }
+        }, { passive: true });
+
+        // ================= PROFILE MENU SYSTEM =================
+        function updateProfileMenu() {
+            const loggedInEmail = localStorage.getItem("loggedInUser");
+            let username = localStorage.getItem("username");
+            
+            if (loggedInEmail && !username) {
+                try {
+                    const userObj = JSON.parse(localStorage.getItem("user"));
+                    if (userObj && userObj.name) {
+                        username = userObj.name;
+                        localStorage.setItem("username", username);
+                    } else {
+                        username = loggedInEmail.split("@")[0];
+                    }
+                } catch(e) {
+                    username = loggedInEmail.split("@")[0];
+                }
+            }
+
+            const loginOption = document.getElementById("loginOption");
+            const logoutOption = document.getElementById("logoutOption");
+            const usernameOption = document.getElementById("usernameOption");
+            const addressOption = document.getElementById("addressOption");
+            const navbarUsername = document.getElementById("navbarUsername");
+
+            if (loggedInEmail || username) {
+                if (loginOption) loginOption.classList.add("d-none");
+                if (logoutOption) logoutOption.classList.remove("d-none");
+                if (usernameOption) usernameOption.classList.remove("d-none");
+                if (addressOption) addressOption.classList.remove("d-none");
+                if (navbarUsername) navbarUsername.textContent = username || loggedInEmail;
+            } else {
+                if (loginOption) loginOption.classList.remove("d-none");
+                if (logoutOption) logoutOption.classList.add("d-none");
+                if (usernameOption) usernameOption.classList.add("d-none");
+                if (addressOption) addressOption.classList.add("d-none");
+                if (navbarUsername) navbarUsername.textContent = "Profile";
+            }
+        }
+        
+        // ================= LOGOUT =================
+        function logout() {
+            if (confirm("Are you sure you want to logout?")) {
+                localStorage.removeItem("loggedInUser");
+                localStorage.removeItem("username");
+                localStorage.removeItem("session");
+                alert("Logged out successfully!");
+                updateProfileMenu();
+            }
+        }
+
+        // ================= CHANGE USERNAME =================
+        function changeUsername() {
+            const newName = prompt("Enter new username");
+            if (newName && newName.trim() !== "") {
+                localStorage.setItem("username", newName);
+                alert("Username updated successfully!");
+                updateProfileMenu();
+            }
+        }
+
+        // ================= CHANGE ADDRESS =================
+        function changeAddress() {
+            const newAddress = prompt("Enter your new address:");
+            if (newAddress) {
+                alert("Address updated to: " + newAddress);
+            }
+        }
+
+        // ================= DEBUNCED SEARCH & FILTER (O(1) DOM Queries) =================
+        let searchTimeout = null;
+        let searchCardsCache = [];
+
+        function searchEvent() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = document.getElementById("searchInput").value.toLowerCase().trim();
+                
+                // Cache card containers once per search session to avoid O(N) DOM querying on every keystroke
+                if (searchCardsCache.length === 0) {
+                    searchCardsCache = Array.from(document.querySelectorAll("#main-events-container > div"));
+                }
+                
+                searchCardsCache.forEach(col => {
+                    const card = col.querySelector(".card");
+                    if (!card) return;
+                    
+                    const title = (card.querySelector(".card-title")?.textContent || "").toLowerCase();
+                    const text = (card.querySelector(".card-text")?.textContent || "").toLowerCase();
+                    
+                    if (title.includes(query) || text.includes(query)) {
+                        col.style.display = "";
+                    } else {
+                        col.style.display = "none";
+                    }
+                });
+            }, 100);
+        }
+
+        // Clear search cache if custom events are dynamically loaded/deleted
+        function clearSearchCache() {
+            searchCardsCache = [];
+        }
+
+        // ================= CLOSE MODAL ON OUTSIDE CLICK =================
+        document.addEventListener("click", function (event) {
+            const modal = document.getElementById("bookingModal");
+            if (event.target === modal) {
+                closeBookingModal();
+            }
+        });
+
+        // NAVIGATION & MODALS
+        function goToLogin() {
+            window.location.href = "login.html";
+        }
+
+        function openNotifications() {
+            alert("No new notifications");
+        }
+
+        function openOrders() {
+            const orders = JSON.parse(localStorage.getItem("orders")) || [];
+            if (orders.length === 0) {
+                alert("No bookings yet");
+                return;
+            }
+
+            let text = "🎟️ Your Orders:\n\n";
+            orders.forEach((o, i) => {
+                text += `${i + 1}. Seats: ${o.seats}\nAmount: ₹${o.amount}\nDate: ${o.date}\n\n`;
+            });
+
+            alert(text);
+            window.location.href = "orders.html";
+        }
+
+        function openStream() {
+            alert("No movies rented yet");
+        }
+
+        function openCredit() {
+            alert("Play Credit Card details coming soon");
+        }
+
+        // HELP
+        function openHelp() {
+            alert("Contact support@eventbook.com");
+        }
+
+        // SETTINGS
+        function openSettings() {
+            alert("Account settings page coming soon");
+        }
+
+        // REWARDS
+        function openRewards() {
+            alert("You have 0 reward points");
+        }
+
+        // BOOK EXCHANGE
+        function openExchange() {
+            alert("Ticket exchange feature coming soon");
+        }
+
+        function openMenu() {
+            document.getElementById("sideMenu").classList.add("show");
+        }
+
+        function closeMenu() {
+            document.getElementById("sideMenu").classList.remove("show");
+        }
+
+        function toggleContent() {
+            const section = document.getElementById("events");
+            if (section) {
+                section.style.display = (section.style.display === "none") ? "block" : "none";
+            }
+        }
+
+        // AUTO DETECT SYSTEM THEME
+        function applySystemTheme() {
+            if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+                document.body.classList.add("dark-mode");
+            }
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+            const theme = document.body.classList.contains("dark-mode") ? "dark" : "light";
+            localStorage.setItem("theme", theme);
+        }
+
+        // ================= GPU-ACCELERATED CUSTOM CINEMATIC CURSOR =================
+        const cursor = document.createElement('div');
+        cursor.classList.add('custom-cursor');
+        const cursorDot = document.createElement('div');
+        cursorDot.classList.add('custom-cursor-dot');
+        document.body.appendChild(cursor);
+        document.body.appendChild(cursorDot);
+
+        let mouseX = -100, mouseY = -100;
+        let tick = false;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            if (!tick) {
+                requestAnimationFrame(updateCursorPosition);
+                tick = true;
+            }
+        }, { passive: true });
+
+        function updateCursorPosition() {
+            // Apply buttery-smooth GPU composite transformations without browser layout reflow
+            cursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
+            cursorDot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
+            tick = false;
+        }
+
+        // High-Performance Event Delegation for Hovers & Clicks (O(1) complexity instead of O(N))
+        document.addEventListener('mouseover', (e) => {
+            const target = e.target.closest('a, button, .card, .event-card, .promo-card, select, input');
+            if (target) {
+                cursor.style.width = '40px';
+                cursor.style.height = '40px';
+                cursor.style.backgroundColor = 'rgba(229, 9, 20, 0.1)';
+                cursor.style.boxShadow = '0 0 15px rgba(229, 9, 20, 0.8)';
+            }
+        }, { passive: true });
+
+        document.addEventListener('mouseout', (e) => {
+            const target = e.target.closest('a, button, .card, .event-card, .promo-card, select, input');
+            if (target) {
+                cursor.style.width = '20px';
+                cursor.style.height = '20px';
+                cursor.style.backgroundColor = 'transparent';
+                cursor.style.boxShadow = '0 0 10px rgba(229, 9, 20, 0.5)';
+            }
+        }, { passive: true });
+
+        // CINEMATIC AUDIO CUES
+        function playAudioCue(type) {
+            // Audio removed per user request
+        }
+
+        // ================= AI CHATBOT LOGIC =================
+        function toggleChat() {
+            document.getElementById('chatbotWindow').classList.toggle('active');
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            const body = document.getElementById('chatBody');
+            body.innerHTML += `<div class="chat-msg msg-user">${msg}</div>`;
+            input.value = '';
+            body.scrollTop = body.scrollHeight;
+
+            setTimeout(() => {
+                const responses = [
+                    "I can help you find events!",
+                    "Are you looking for movies or concerts?",
+                    "We have a great offer on IPL tickets right now!"
+                ];
+                const reply = responses[Math.floor(Math.random() * responses.length)];
+                body.innerHTML += `<div class="chat-msg msg-ai">${reply}</div>`;
+                body.scrollTop = body.scrollHeight;
+            }, 1000);
+        }
+
+        // ================= SOCIAL PROOF NOTIFICATIONS =================
+        const proofMessages = [
+            "🔥 Someone in Mumbai just booked 2 VIP tickets!",
+            "🎟️ Only 4 seats left for Inception tonight.",
+            "🌟 A user in Delhi just joined EventNest.",
+            "🏏 IPL Finals are selling out fast!"
+        ];
+        
+        setInterval(() => {
+            if (Math.random() > 0.4) {
+                const toast = document.getElementById('socialProofToast');
+                if (toast) {
+                    document.getElementById('proofText').innerText = proofMessages[Math.floor(Math.random() * proofMessages.length)];
+                    toast.classList.add('show');
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                    }, 4000);
+                }
+            }
+        }, 12000);
+
+        // ================= CONSOLIDATED SPEED-OPTIMIZED PAGE INITIALIZATION =================
+        document.addEventListener("DOMContentLoaded", () => {
+            // 1. Load dynamic custom admin events first (so they are present in the DOM for card queries)
+            const eventsContainer = document.getElementById('main-events-container');
+            if (eventsContainer) {
+                const customEvents = JSON.parse(localStorage.getItem('admin_custom_events')) || [];
+                customEvents.forEach(ev => {
+                    if (ev.status === 'Active') {
+                        if (ev.name === "MI vs CSK" || ev.name === "Inception Re-release") return;
+                        
+                        let link = "#";
+                        const cat = ev.category.toLowerCase();
+                        if (cat.includes('sport') || cat.includes('cricket')) link = "cricket.html";
+                        else if (cat.includes('movie')) link = "movies.html";
+                        else if (cat.includes('concert')) link = "concerts.html";
+                        else if (cat.includes('seminar')) link = "seminars.html";
+                        else link = `javascript:alert('Booking page for ${ev.category} coming soon!');`;
+
+                        const eventCardHTML = `
+                            <div class="col-md-4">
+                                <div class="card h-100" style="border: 1px solid var(--netflix-red);">
+                                    <div style="position:absolute; top:10px; right:10px; background:var(--netflix-red); color:white; padding:2px 8px; border-radius:4px; font-size:0.8rem; z-index:10; font-weight:bold;">NEW</div>
+                                    <img src="${ev.img}" class="card-img-top" alt="${ev.name}" onerror="this.onerror=null; this.src='images/c_hero.jpg';">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${ev.name}</h5>
+                                        <p class="card-text">${ev.category} • ${ev.date}</p>
+                                        <a href="${link}" class="btn btn-warning">Book Now</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        eventsContainer.insertAdjacentHTML('afterbegin', eventCardHTML);
+                    }
+                });
+            }
+
+            // 2. Profile Menu System & Login State Check
+            updateProfileMenu();
+            const loggedInUser = localStorage.getItem("loggedInUser");
+            if (loggedInUser) {
+                let userName = "Profile";
+                try {
+                    const p = JSON.parse(localStorage.getItem("userProfile"));
+                    if (p && p.name) userName = p.name.split(" ")[0];
+                } catch(e) {}
+                
+                const userSpan = document.getElementById('navbarUsername');
+                if (userSpan) userSpan.innerText = userName;
+                
+                const loginOp = document.getElementById('loginOption');
+                const logoutOp = document.getElementById('logoutOption');
+                const usernameOp = document.getElementById('usernameOption');
+                const addressOp = document.getElementById('addressOption');
+                const ticketsOp = document.getElementById('ticketsOption');
+
+                if (loginOp) loginOp.classList.add('d-none');
+                if (logoutOp) logoutOp.classList.remove('d-none');
+                if (usernameOp) usernameOp.classList.remove('d-none');
+                if (addressOp) addressOp.classList.remove('d-none');
+                if (ticketsOp) ticketsOp.classList.remove('d-none');
+            }
+
+            // 3. Theme Detection & Toggle Binding
+            applySystemTheme();
+            const themeBtn = document.getElementById('theme-toggle');
+            if (themeBtn) {
+                if (localStorage.getItem('theme') === 'light') {
+                    document.documentElement.classList.add('light-mode');
+                    themeBtn.innerHTML = '<i class="bi bi-sun"></i>';
+                }
+
+                themeBtn.addEventListener('click', () => {
+                    document.documentElement.classList.toggle('light-mode');
+                    if (document.documentElement.classList.contains('light-mode')) {
+                        localStorage.setItem('theme', 'light');
+                        themeBtn.innerHTML = '<i class="bi bi-sun"></i>';
+                    } else {
+                        localStorage.setItem('theme', 'dark');
+                        themeBtn.innerHTML = '<i class="bi bi-moon-stars"></i>';
+                    }
+                });
+            }
+
+            // 4. City Select Initialization
+            const citySelect = document.getElementById("citySelect");
+            if (citySelect) {
+                const savedCity = localStorage.getItem("selectedCity");
+                if (savedCity) {
+                    citySelect.value = savedCity;
+                }
+
+                citySelect.addEventListener("change", function () {
+                    const city = this.value;
+                    localStorage.setItem("selectedCity", city);
+                    
+                    const cityLower = city.toLowerCase();
+                    const cols = document.querySelectorAll("#main-events-container > div");
+                    
+                    cols.forEach(col => {
+                        const card = col.querySelector(".card");
+                        if (!card) return;
+                        
+                        const text = card.textContent.toLowerCase();
+                        if (!cityLower || text.includes(cityLower)) {
+                            col.style.display = "";
+                        } else {
+                            col.style.display = "none";
+                        }
+                    });
+                });
+            }
+
+            // 5. Initialize 3D Parallax Tilt on ALL Cards (including dynamically loaded custom admin events!)
+            if (typeof VanillaTilt !== 'undefined') {
+                VanillaTilt.init(document.querySelectorAll(".card, .event-card, .promo-card"), {
+                    max: 15,
+                    speed: 400,
+                    glare: true,
+                    "max-glare": 0.2,
+                    scale: 1.05
+                });
+            }
+        });
+    </script>
+</body>
+</html>

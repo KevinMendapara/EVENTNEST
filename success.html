@@ -1,0 +1,29 @@
+<div class="ticket">
+  <h2>🎟️ Your Ticket</h2>
+  <p>Seats: <span id="seats"></span></p>
+  <p>Amount: ₹<span id="amount"></span></p>
+  <p>Status: Confirmed ✅</p>
+</div>
+
+<style>
+.ticket {
+  margin: 100px auto;
+  padding: 30px;
+  width: 300px;
+  border-radius: 20px;
+  background: linear-gradient(135deg,#ff006e,#ffbe0b);
+  color: white;
+  text-align: center;
+  animation: pop 0.6s ease;
+}
+
+@keyframes pop {
+  from { transform: scale(0.5); opacity:0; }
+  to { transform: scale(1); opacity:1; }
+}
+</style>
+
+<script>
+document.getElementById("seats").innerText = localStorage.getItem("seats");
+document.getElementById("amount").innerText = localStorage.getItem("amount");
+</script>

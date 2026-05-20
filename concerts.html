@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  <title>Concerts</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="concert.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(0,0,0,0.8) !important; backdrop-filter: blur(10px);">
+      <div class="container-fluid px-4">
+          <a class="navbar-brand fw-bold" href="index.html">Event<span style="color:#fff">Nest</span></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+              <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="menu">
+              <div class="d-flex align-items-center ms-auto gap-3">
+                  <!-- SEARCH BAR -->
+                  <div class="d-flex">
+                      <input class="form-control" type="search" placeholder="Search Singer..." id="search">
+                  </div>
+                  <!-- CITY SELECT -->
+                  <select class="form-select" style="width:150px;" id="cityFilter">
+                      <option value="">All Cities</option>
+                      <option>Mumbai</option>
+                      <option>Delhi</option>
+                      <option>Bangalore</option>
+                  </select>
+                  <!-- MONTH SELECT -->
+                  <select class="form-select" style="width:150px;" id="monthFilter">
+                      <option value="">All Months</option>
+                      <option>March</option>
+                      <option>April</option>
+                      <option>May</option>
+                      <option>June</option>
+                  </select>
+                  <ul class="navbar-nav ms-auto">
+                      <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+                      <li class="nav-item"><a href="concerts.html" class="nav-link active">Events</a></li>
+                  </ul>
+              </div>
+          </div>
+      </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="concert-hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+          <h1 class="display-3 fw-bold text-white mb-3">Live Concerts & Festivals</h1>
+          <p class="lead text-light mb-4">Experience the magic of live music. Book tickets for your favorite artists.</p>
+          <button class="btn btn-danger btn-lg px-5 rounded-pill fw-bold shadow" onclick="document.getElementById('concertList').scrollIntoView({behavior: 'smooth'})">Explore Artists</button>
+      </div>
+  </header>
+
+  <style>
+      .concert-hero {
+          position: relative;
+          height: 60vh;
+          min-height: 400px;
+          background: url('main_hero.png') center/cover no-repeat;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          margin-bottom: 40px;
+      }
+      .concert-hero .hero-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(20,20,20,1) 100%);
+      }
+      .concert-hero .hero-content {
+          position: relative;
+          z-index: 2;
+          padding: 20px;
+          animation: fadeInUp 1s ease-out;
+      }
+      @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+      }
+  </style>
+
+  <div class="container mb-5">
+    <h2 class="fw-bold text-white mb-4 border-bottom border-danger pb-2 d-inline-block">Trending Artists</h2>
+    <div id="concertList" class="grid mt-2"></div>
+  </div>
+
+  <script src="concerts.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

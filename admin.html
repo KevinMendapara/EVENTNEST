@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventNest Admin Portal</title>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Admin Custom CSS -->
+    <link rel="stylesheet" href="admin.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase_config.js"></script>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <a href="splash.html" class="sidebar-brand">EVENTNEST<span style="color:white; font-size:1rem;"> ADMIN</span></a>
+        </div>
+        <ul class="nav-links">
+            <li class="nav-item active" data-target="dashboard">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </li>
+            <li class="nav-item" data-target="events">
+                <i class="fas fa-film"></i>
+                <span>Events</span>
+            </li>
+            <li class="nav-item" data-target="venues">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Venues & Seats</span>
+            </li>
+            <li class="nav-item" data-target="bookings">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Bookings</span>
+            </li>
+            <li class="nav-item" data-target="users">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </li>
+            <li class="nav-item" data-target="offers">
+                <i class="fas fa-gift"></i>
+                <span>Offers</span>
+            </li>
+            <li class="nav-item" data-target="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="logout-btn" onclick="window.location.href='splash.html'">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <h1 class="topbar-title" id="topbar-title">Dashboard</h1>
+            <div class="admin-profile">
+                <button id="theme-toggle" class="btn-red" style="margin-right: 20px; background: #333; color: #fff;"><i class="fas fa-moon"></i> Theme</button>
+                <div style="text-align: right;">
+                    <p style="margin:0; font-weight: 500;">Admin User</p>
+                    <small style="color: var(--netflix-light-grey);">Superadmin</small>
+                </div>
+                <div class="admin-avatar">A</div>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section active">
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <i class="fas fa-rupee-sign stat-icon"></i>
+                    <h3 class="stat-title">Total Revenue</h3>
+                    <p class="stat-value">₹4.2M</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-ticket-alt stat-icon"></i>
+                    <h3 class="stat-title">Tickets Sold</h3>
+                    <p class="stat-value">12,450</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users stat-icon"></i>
+                    <h3 class="stat-title">Active Users</h3>
+                    <p class="stat-value">8,920</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-check stat-icon"></i>
+                    <h3 class="stat-title">Upcoming Events</h3>
+                    <p class="stat-value">24</p>
+                </div>
+            </div>
+
+            <div class="header-actions" style="margin-top: 40px;">
+                <h2>Recent Bookings</h2>
+                <button class="btn-red"><i class="fas fa-download"></i> Export</button>
+            </div>
+            
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>User</th>
+                            <th>Event</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboard-bookings-body">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Events Section -->
+        <section id="events" class="section">
+            <div class="header-actions">
+                <h2>Manage Events</h2>
+                <button class="btn-red"><i class="fas fa-plus"></i> Add New Event</button>
+            </div>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Cover</th>
+                            <th>Event Name</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-table-body">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Venues Section -->
+        <section id="venues" class="section">
+            <div class="header-actions">
+                <h2>Venues & Layouts</h2>
+                <button class="btn-red"><i class="fas fa-plus"></i> Add Venue</button>
+            </div>
+            <div class="dashboard-grid">
+                <div class="stat-card" style="text-align: center; padding: 40px 20px;">
+                    <i class="fas fa-building" style="font-size: 3rem; color: var(--netflix-red); margin-bottom: 15px;"></i>
+                    <h3 style="margin:0;">PVR Cinemas, Mall of India</h3>
+                    <p style="color: var(--netflix-light-grey); margin-top:5px;">Capacity: 350 | Screens: 4</p>
+                </div>
+                <div class="stat-card" style="text-align: center; padding: 40px 20px;">
+                    <i class="fas fa-futbol" style="font-size: 3rem; color: var(--netflix-red); margin-bottom: 15px;"></i>
+                    <h3 style="margin:0;">Wankhede Stadium</h3>
+                    <p style="color: var(--netflix-light-grey); margin-top:5px;">Capacity: 33,108 | Zones: 8</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bookings Section -->
+        <section id="bookings" class="section">
+            <div class="header-actions">
+                <h2>All Bookings</h2>
+                <div>
+                    <input type="text" placeholder="Search Booking ID..." style="padding: 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--card-bg); color: white; margin-right: 10px;">
+                    <button class="btn-red"><i class="fas fa-search"></i></button>
+                </div>
+            </div>
+            <p style="color: var(--netflix-light-grey);" id="bookings-loading-text">Loading detailed booking logs...</p>
+            <div class="table-container" id="bookings-table-container" style="display:none;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>User</th>
+                            <th>Event</th>
+                            <th>Amount</th>
+                            <th>Seats</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookings-table-body">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Users Section -->
+        <section id="users" class="section">
+            <div class="header-actions">
+                <h2>User Management</h2>
+            </div>
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Joined Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Offers Section -->
+        <section id="offers" class="section">
+            <div class="header-actions">
+                <h2>Promo Codes & Rewards</h2>
+                <button class="btn-red"><i class="fas fa-plus"></i> Create Code</button>
+            </div>
+            <div class="dashboard-grid">
+                <div class="stat-card" style="border-left: 4px solid var(--netflix-red);">
+                    <h2 style="margin:0; color: var(--netflix-red);">SUMMER20</h2>
+                    <p style="color: var(--netflix-light-grey); margin: 5px 0 15px 0;">20% OFF on all Movies</p>
+                    <span class="status-badge status-active">Active</span>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #555;">
+                    <h2 style="margin:0; color: #555;">FIRST50</h2>
+                    <p style="color: var(--netflix-light-grey); margin: 5px 0 15px 0;">₹50 OFF on first booking</p>
+                    <span class="status-badge status-draft">Expired</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings" class="section">
+            <div class="header-actions">
+                <h2>Platform Settings</h2>
+                <button class="btn-red"><i class="fas fa-save"></i> Save Changes</button>
+            </div>
+            <div class="table-container" style="max-width: 600px;">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--netflix-light-grey);">Platform Name</label>
+                    <input type="text" value="EventNest" style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--netflix-black); color: white;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--netflix-light-grey);">Support Email</label>
+                    <input type="email" value="support@eventnest.com" style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--netflix-black); color: white;">
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: var(--netflix-light-grey);">Maintenance Mode</label>
+                    <select style="width: 100%; padding: 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--netflix-black); color: white;">
+                        <option value="off">Off (Live)</option>
+                        <option value="on">On</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Admin Logic -->
+    <script src="admin.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tickets | EventNest</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase_config.js"></script>
+    <style>
+        body {
+            background-color: #0d0d14;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            padding-top: 80px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            margin-top: 50px;
+        }
+
+        .empty-state i {
+            font-size: 5rem;
+            color: #4facfe;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .ticket-scene {
+            perspective: 1500px;
+            width: 100%;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .ticket-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+        .ticket-scene:hover .ticket-card {
+            transform: rotateY(180deg);
+        }
+
+        .ticket-front, .ticket-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+        }
+
+        .ticket-front {
+            flex-direction: row;
+        }
+
+        .ticket-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg, #0d0d14, #1a1a2e);
+            border: 1px solid #4facfe;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .ticket-img-box {
+            position: relative;
+            width: 300px;
+            height: 100%;
+            flex-shrink: 0;
+        }
+
+        .ticket-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .category-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            color: #00f2fe;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid rgba(0, 242, 254, 0.3);
+        }
+
+        .ticket-details {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .ticket-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+        
+        .order-id {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            border-bottom: 1px dashed rgba(255,255,255,0.05);
+            padding-bottom: 12px;
+        }
+
+        .info-label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .info-val {
+            font-weight: 600;
+            color: #fff;
+            text-align: right;
+        }
+
+        .qr-section {
+            background: #fff;
+            padding: 10px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .qr-section canvas {
+            width: 120px !important;
+            height: 120px !important;
+        }
+
+        .back-msg {
+            color: #4facfe;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .flip-hint {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            color: #888;
+            font-size: 0.8rem;
+            animation: bounceRight 2s infinite;
+        }
+
+        @keyframes bounceRight {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+        }
+
+        .ticket-footer {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            margin-top: auto;
+        }
+        
+        @media (min-width: 768px) {
+            .ticket-footer {
+                flex-direction: row;
+            }
+        }
+
+        /* --- THEMED TICKET DESIGNS --- */
+        /* 1. MOVIE: Cinematic film strip style */
+        .ticket-card.theme-movie .ticket-front { 
+            background: linear-gradient(90deg, #141414, #2a0808); 
+            border: 1px solid #E50914; 
+        }
+        .ticket-card.theme-movie .ticket-front::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 20px;
+            background-image: radial-gradient(circle, #000 4px, transparent 5px);
+            background-size: 20px 20px; border-right: 1px dashed rgba(229, 9, 20, 0.3);
+        }
+        .ticket-card.theme-movie .category-badge { background: #E50914; color: #fff; border: none; left: 30px; }
+        .ticket-card.theme-movie .ticket-back { background: radial-gradient(circle at center, #2a0808, #141414); border-color: #E50914; }
+
+        /* 2. CONCERT: Neon Cyberpunk */
+        .ticket-card.theme-concert .ticket-front { 
+            background: linear-gradient(135deg, #1a0b2e, #2d1445); 
+            border: 1px solid #b122e5; 
+            box-shadow: 0 0 20px rgba(177, 34, 229, 0.15);
+        }
+        .ticket-card.theme-concert .ticket-title { text-shadow: 0 0 10px rgba(177,34,229,0.5); }
+        .ticket-card.theme-concert .category-badge { background: #b122e5; color: #fff; box-shadow: 0 0 15px #b122e5; border: none; }
+        .ticket-card.theme-concert .ticket-back { background: linear-gradient(135deg, #0d001a, #1a0b2e); border-color: #b122e5; }
+
+        /* 3. CRICKET: Sporty Grass Green */
+        .ticket-card.theme-cricket .ticket-front { 
+            background: linear-gradient(90deg, #0a1f10, #143d20); 
+            border: 1px solid #00b84c; 
+        }
+        .ticket-card.theme-cricket .ticket-front::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 10px, transparent 10px, transparent 20px);
+            pointer-events: none;
+        }
+        .ticket-card.theme-cricket .category-badge { background: #00b84c; color: #fff; border: none; }
+        .ticket-card.theme-cricket .ticket-back { background: #0a1f10; border-color: #00b84c; }
+
+        /* 4. WORKSHOP: Creative Pastel */
+        .ticket-card.theme-workshop .ticket-front { 
+            background: linear-gradient(135deg, #2a111a, #471d2c); 
+            border: 1px solid #ff7eb3; 
+        }
+        .ticket-card.theme-workshop .ticket-title { font-family: Georgia, serif; font-style: italic; color: #ff7eb3; }
+        .ticket-card.theme-workshop .category-badge { background: #ff7eb3; color: #000; border: none; }
+        .ticket-card.theme-workshop .ticket-back { background: #2a111a; border-color: #ff7eb3; }
+
+        /* 5. SEMINAR: Tech Grid */
+        .ticket-card.theme-seminar .ticket-front { 
+            background: linear-gradient(135deg, #091c2b, #133b5c); 
+            border: 1px solid #00f2fe; 
+        }
+        .ticket-card.theme-seminar .ticket-front::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: linear-gradient(rgba(0, 242, 254, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 242, 254, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px; pointer-events: none;
+        }
+        .ticket-card.theme-seminar .category-badge { background: transparent; border: 1px solid #00f2fe; color: #00f2fe; }
+        .ticket-card.theme-seminar .ticket-back { background: #091c2b; border-color: #00f2fe; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark fixed-top" style="background: rgba(13, 13, 20, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html">
+                <i class="bi bi-arrow-left me-2"></i> Event<span style="color: #4facfe;">Nest</span>
+            </a>
+            <div class="d-flex align-items-center text-white">
+                <i class="bi bi-person-circle fs-4 me-2 text-primary"></i>
+                <span id="userName">User</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        <h1 class="page-title"><i class="bi bi-ticket-perforated me-3"></i>My Tickets</h1>
+        
+        <div id="ticketsContainer" class="row g-4">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userEmail = localStorage.getItem("loggedInUser") || "Guest";
+            let userName = "Guest";
+            try {
+                let p = JSON.parse(localStorage.getItem("userProfile"));
+                if(p && p.name) userName = p.name;
+            } catch(e){}
+            document.getElementById("userName").innerText = userName;
+
+            let userOrders = [];
+
+            if (typeof supabaseClient !== 'undefined' && !SUPABASE_URL.includes('YOUR-PROJECT-ID')) {
+                // Fetch from Supabase
+                const { data, error } = await supabaseClient
+                    .from('orders')
+                    .select('*')
+                    .eq('user', userEmail)
+                    .order('date', { ascending: false });
+                
+                if (error) {
+                    console.error("Error fetching orders:", error);
+                } else {
+                    userOrders = data;
+                }
+            } else {
+                // Fallback to LocalStorage
+                const orders = JSON.parse(localStorage.getItem("orders")) || [];
+                userOrders = orders.filter(o => o.user === userEmail || userEmail === "Guest" || o.user === "Guest");
+                userOrders.reverse();
+            }
+
+            const container = document.getElementById('ticketsContainer');
+
+            if (userOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="empty-state">
+                            <i class="bi bi-ticket-detailed"></i>
+                            <h3 class="mb-3">No Tickets Found</h3>
+                            <p class="text-secondary mb-4">You haven't booked any events yet. Discover amazing concerts, movies, and seminars!</p>
+                            <a href="index.html" class="btn btn-primary px-4 py-2 rounded-pill fw-bold">Explore Events</a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            userOrders.forEach((order, index) => {
+                const col = document.createElement('div');
+                col.className = 'col-12';
+                
+                let parsedSeats = order.seats;
+                try {
+                    let s = JSON.parse(order.seats);
+                    if(Array.isArray(s)) parsedSeats = s.join(", ");
+                }catch(e){}
+
+                // Determine Theme based on Category
+                let themeClass = 'theme-movie';
+                let iconClass = 'bi-film';
+                let catText = order.category || 'Event';
+                
+                if (catText.toLowerCase().includes('live') || catText.toLowerCase().includes('concert')) {
+                    themeClass = 'theme-concert';
+                    iconClass = 'bi-music-note-beamed';
+                } else if (catText.toLowerCase().includes('cricket')) {
+                    themeClass = 'theme-cricket';
+                    iconClass = 'bi-trophy-fill';
+                } else if (catText.toLowerCase().includes('workshop')) {
+                    themeClass = 'theme-workshop';
+                    iconClass = 'bi-palette-fill';
+                } else if (catText.toLowerCase().includes('seminar')) {
+                    themeClass = 'theme-seminar';
+                    iconClass = 'bi-laptop';
+                }
+
+                col.innerHTML = `
+                    <div class="ticket-scene">
+                        <div class="ticket-card ${themeClass}">
+                            <!-- FRONT OF TICKET -->
+                            <div class="ticket-front">
+                                <div class="ticket-img-box">
+                                    <span class="category-badge"><i class="bi ${iconClass} me-1"></i>${catText}</span>
+                                    <img src="${order.image || 'images/main_hero.png'}" alt="${order.title}" onerror="this.onerror=null; this.src='images/main_hero.png';">
+                                </div>
+                                <div class="ticket-details">
+                                    <div class="d-flex justify-content-between align-items-start mb-3" style="position: relative; z-index: 2;">
+                                        <div>
+                                            <h3 class="ticket-title">${order.title || 'Event Ticket'}</h3>
+                                            <div class="order-id">Order ID: ${order.id || 'N/A'}</div>
+                                        </div>
+                                        <div class="badge bg-success bg-opacity-25 text-success border border-success p-2">CONFIRMED</div>
+                                    </div>
+
+                                    <div class="w-100 pe-4" style="position: relative; z-index: 2;">
+                                        <div class="info-row">
+                                            <span class="info-label"><i class="bi bi-calendar me-2"></i>Booked On</span>
+                                            <span class="info-val">${order.date || 'Unknown'}</span>
+                                        </div>
+                                        <div class="info-row">
+                                            <span class="info-label"><i class="bi bi-person-bounding-box me-2"></i>Seats</span>
+                                            <span class="info-val">${parsedSeats || 'General'}</span>
+                                        </div>
+                                        <div class="info-row border-0 mb-0 pb-0">
+                                            <span class="info-label"><i class="bi bi-currency-rupee me-2"></i>Amount Paid</span>
+                                            <span class="info-val text-success fw-bold fs-5">₹${order.amount || '0'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="flip-hint">Hover to flip <i class="bi bi-arrow-right"></i></div>
+                                </div>
+                            </div>
+                            
+                            <!-- BACK OF TICKET -->
+                            <div class="ticket-back">
+                                <div class="qr-section">
+                                    <canvas id="qr-${index}"></canvas>
+                                </div>
+                                <div class="back-msg">Show at the entrance</div>
+                                <p class="text-secondary small mb-0">${order.id || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+                
+                // Generate QR
+                setTimeout(() => {
+                    QRCode.toCanvas(document.getElementById(`qr-${index}`), order.id || 'TICKET', { 
+                        width: 100, 
+                        margin: 0,
+                        color: { dark: '#000000', light: '#ffffff' }
+                    });
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
+

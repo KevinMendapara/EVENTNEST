@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creative Workshops | EventNest</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            padding-top: 80px;
+        }
+
+        /* Hero Section */
+        .workshop-hero {
+            position: relative;
+            height: 40vh;
+            background: url('images/w_hero.jpg') center/cover no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .workshop-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(10, 10, 10, 0.4), rgba(10, 10, 10, 1));
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Workshop Cards */
+        .workshop-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .workshop-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(245, 87, 108, 0.2);
+            border-color: rgba(245, 87, 108, 0.4);
+        }
+
+        .card-img-wrapper {
+            position: relative;
+            height: 240px;
+            overflow: hidden;
+        }
+
+        .card-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .workshop-card:hover .card-img-wrapper img {
+            transform: scale(1.15) rotate(2deg);
+        }
+
+        .category-badge {
+            position: absolute;
+            bottom: -15px;
+            right: 20px;
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(245, 87, 108, 0.4);
+            z-index: 2;
+        }
+
+        .card-body {
+            padding: 30px 25px 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .workshop-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .workshop-detail {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #bbb;
+            font-size: 0.95rem;
+        }
+
+        .workshop-detail i {
+            width: 26px;
+            color: #f093fb;
+            font-size: 1.1rem;
+        }
+
+        .instructor-box {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            margin-bottom: 25px;
+        }
+
+        .instructor-box img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+            border: 2px solid #f5576c;
+        }
+
+        .instructor-info h6 {
+            margin: 0;
+            font-size: 1rem;
+            color: #eee;
+            font-weight: 600;
+        }
+
+        .instructor-info small {
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        .card-footer-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .price {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .book-btn {
+            background: transparent;
+            color: #f093fb;
+            border: 2px solid #f093fb;
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .workshop-card:hover .book-btn {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: #fff;
+            border-color: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Simple Navbar -->
+    <nav class="navbar navbar-dark fixed-top" style="background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="index.html" style="font-family: 'Inter', sans-serif;">
+                <i class="bi bi-arrow-left me-2"></i> Event<span style="color: #f5576c;">Nest</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="workshop-hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Creative Workshops</h1>
+            <p class="lead text-light">Unleash your imagination. Learn from master creators.</p>
+        </div>
+    </header>
+
+    <div class="container mb-5">
+        <div class="row g-4" id="workshopsList">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <script>
+        const workshops = [
+            {
+                title: "UI/UX Design Masterclass",
+                category: "Design",
+                date: "05 Nov 2026",
+                time: "10:00 AM",
+                venue: "NID Campus, Ahmedabad",
+                price: 1800,
+                image: "images/w_design.jpg",
+                instructor: "Don Norman",
+                instructorRole: "Design Pioneer",
+                instructorImg: "images/av_don.jpg"
+            },
+            {
+                title: "Digital Photography Workshop",
+                category: "Photography",
+                date: "12 Nov 2026",
+                time: "08:00 AM",
+                venue: "Kala Ghoda, Mumbai",
+                price: 1500,
+                image: "images/w_photo.jpg",
+                instructor: "Ansel Adams",
+                instructorRole: "Pro Photographer",
+                instructorImg: "images/av_ansel.jpg"
+            },
+            {
+                title: "Creative Writing Retreat",
+                category: "Literature",
+                date: "20 Nov 2026",
+                time: "09:30 AM",
+                venue: "Literature Society, Kolkata",
+                price: 1200,
+                image: "images/w_write.jpg",
+                instructor: "J.K. Rowling",
+                instructorRole: "Bestselling Author",
+                instructorImg: "images/av_jk.jpg"
+            },
+            {
+                title: "Pottery & Ceramic Arts",
+                category: "Craft",
+                date: "25 Nov 2026",
+                time: "02:00 PM",
+                venue: "Art Village, Pune",
+                price: 2000,
+                image: "images/w_pottery.jpg",
+                instructor: "Grayson Perry",
+                instructorRole: "Ceramic Artist",
+                instructorImg: "images/av_grayson.jpg"
+            }
+        ];
+
+        function renderWorkshops() {
+            const container = document.getElementById('workshopsList');
+            container.innerHTML = workshops.map((w, index) => {
+                const safeData = encodeURIComponent(JSON.stringify(w));
+                return `
+                <div class="col-lg-6 col-xl-6">
+                    <div class="workshop-card">
+                        <div class="card-img-wrapper">
+                            <span class="category-badge">${w.category}</span>
+                            <img src="${w.image}" alt="${w.title}" onerror="this.onerror=null; this.src='images/w_hero.jpg';">
+                        </div>
+                        <div class="card-body">
+                            <h3 class="workshop-title">${w.title}</h3>
+                            
+                            <div class="row mt-2 mb-3">
+                                <div class="col-sm-6">
+                                    <div class="workshop-detail">
+                                        <i class="bi bi-calendar2-heart"></i>
+                                        <span>${w.date} • ${w.time}</span>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="workshop-detail">
+                                        <i class="bi bi-geo-alt"></i>
+                                        <span>${w.venue}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="instructor-box">
+                                <img src="${w.instructorImg}" alt="${w.instructor}" onerror="this.onerror=null; this.src='images/av_don.jpg';">
+                                <div class="instructor-info">
+                                    <h6>${w.instructor}</h6>
+                                    <small>${w.instructorRole}</small>
+                                </div>
+                            </div>
+
+                            <div class="card-footer-custom">
+                                <div class="price">₹${w.price.toLocaleString()}</div>
+                                <button class="btn book-btn" onclick="viewDetails('${safeData}')">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function viewDetails(dataString) {
+            const data = JSON.parse(decodeURIComponent(dataString));
+            localStorage.setItem("currentWorkshop", JSON.stringify(data));
+            window.location.href = "workshop_details.html";
+        }
+
+        document.addEventListener('DOMContentLoaded', renderWorkshops);
+    </script>
+</body>
+</html>
+

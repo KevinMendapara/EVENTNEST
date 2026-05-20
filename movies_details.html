@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  <meta charset="UTF-8">
+  <title>Movie Details</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Oswald:wght@700&display=swap');
+    
+    body {
+      background-color: #141414;
+      color: #ffffff;
+      font-family: 'DM Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* Navbar */
+    .navbar {
+      background: transparent !important;
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+      transition: background 0.3s;
+      padding: 20px 40px;
+    }
+    .navbar.scrolled {
+      background: #141414 !important;
+    }
+
+    /* Hero Section */
+    .hero {
+      position: relative;
+      width: 100vw;
+      height: 70vh;
+      min-height: 500px;
+      background-size: cover;
+      background-position: center 20%;
+      background-repeat: no-repeat;
+    }
+    
+    .hero-vignette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        linear-gradient(to right, #141414 0%, rgba(20,20,20,0.7) 40%, transparent 100%),
+        linear-gradient(to top, #141414 0%, transparent 40%);
+    }
+
+    .hero-content {
+      position: absolute;
+      bottom: 10%;
+      left: 4%;
+      width: 50%;
+      z-index: 10;
+    }
+
+    .movie-title-img {
+      font-family: 'Oswald', 'Impact', sans-serif;
+      font-size: 5rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    }
+
+    .metadata-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 20px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    }
+    
+    .match-score { color: #46d369; font-weight: 700; }
+    .maturity-rating {
+      border: 1px solid rgba(255,255,255,0.4);
+      padding: 0 5px;
+      font-size: 0.9rem;
+    }
+    .hd-badge {
+      border: 1px solid rgba(255,255,255,0.4);
+      padding: 0 5px;
+      font-size: 0.8rem;
+      border-radius: 3px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 15px;
+    }
+    .btn-play {
+      background-color: #ffffff;
+      color: #000000;
+      border: none;
+      padding: 10px 30px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background-color 0.2s;
+    }
+    .btn-play:hover { background-color: #e6e6e6; color: #000; }
+    
+    .btn-more {
+      background-color: rgba(109, 109, 110, 0.7);
+      color: #ffffff;
+      border: none;
+      padding: 10px 30px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background-color 0.2s;
+    }
+    .btn-more:hover { background-color: rgba(109, 109, 110, 0.4); color: #fff;}
+
+    /* Body Layout */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 50px;
+      padding: 0 4%;
+      margin-top: 20px;
+    }
+
+    .synopsis {
+      color: #e5e5e5;
+      font-size: 1.15rem;
+      line-height: 1.5;
+      margin-bottom: 50px;
+    }
+
+    /* Sidebar */
+    .sidebar-block {
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .sidebar-label { color: #777; }
+    .sidebar-value { color: #fff; text-decoration: none; }
+    .sidebar-value:hover { text-decoration: underline; }
+
+    /* More Like This */
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      margin-left: 4%;
+    }
+    .more-like-this {
+      display: flex;
+      gap: 15px;
+      overflow-x: auto;
+      padding: 0 4% 50px 4%;
+      scrollbar-width: none; /* Firefox */
+    }
+    .more-like-this::-webkit-scrollbar { display: none; }
+    
+    .mlt-card {
+      min-width: 250px;
+      height: 140px;
+      background-color: #1f1f1f;
+      border-radius: 4px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 10px;
+    }
+    .mlt-card img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+    .mlt-title {
+      position: relative;
+      z-index: 2;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity 0.3s;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    }
+    .mlt-card:hover {
+      background-color: #2a2a2a;
+      transform: scale(1.05);
+      z-index: 5;
+    }
+    .mlt-card:hover img { opacity: 0.3; }
+    .mlt-card:hover .mlt-title { opacity: 1; }
+
+    /* Modal for Trailer */
+    .modal-content {
+      background-color: #141414;
+      border: 1px solid #333;
+    }
+    .modal-header {
+      border-bottom: none;
+    }
+    .btn-close {
+      filter: invert(1);
+    }
+    
+    @media (max-width: 768px) {
+      .content-grid { grid-template-columns: 1fr; gap: 20px; }
+      .hero-content { width: 90%; }
+      .movie-title-img { font-size: 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <a href="#" onclick="history.back()" class="text-white text-decoration-none fs-4">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+  </nav>
+
+  <!-- Hero Section -->
+  <div class="hero" id="heroBg">
+    <div class="hero-vignette"></div>
+    <div class="hero-content">
+      <div class="movie-title-img" id="titleDisplay">Movie Title</div>
+      <div class="metadata-row">
+        <span class="match-score">98% Match</span>
+        <span id="yearDisplay">2026</span>
+        <span class="maturity-rating">UA</span>
+        <span id="runtimeDisplay">2h 15m</span>
+        <span class="hd-badge">HD</span>
+      </div>
+      <div class="btn-row">
+        <button class="btn-play" onclick="playTrailer()"><i class="bi bi-play-fill"></i> Play</button>
+        <button class="btn-more" onclick="goToTheatres()"><i class="bi bi-info-circle"></i> More Info</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="content-grid">
+    <!-- Left Column: Synopsis & Reviews -->
+    <div>
+      <p class="synopsis" id="synopsisDisplay">
+        Loading thrilling details...
+      </p>
+      
+      <!-- User Reviews -->
+      <div class="mt-5">
+        <h3 class="mb-4" style="color: #fff; font-size: 1.5rem; font-weight: 700;"><i class="bi bi-chat-left-text-fill" style="color: #e50914; margin-right: 10px;"></i> User Reviews</h3>
+        <div id="reviewsContainer" class="d-flex flex-column gap-3">
+          <p class="text-muted">Loading reviews...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Sidebar metadata -->
+    <div>
+      <div class="sidebar-block">
+        <span class="sidebar-label">Cast: </span>
+        <span class="sidebar-value" id="castDisplay">...</span>
+      </div>
+      <div class="sidebar-block">
+        <span class="sidebar-label">Genres: </span>
+        <span class="sidebar-value" id="genreDisplay">...</span>
+      </div>
+      <div class="sidebar-block">
+        <span class="sidebar-label">This show is: </span>
+        <span class="sidebar-value">Exciting, Action-packed, Visually Striking</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- More Like This -->
+  <h3 class="section-title">More Like This</h3>
+  <div class="more-like-this" id="moreLikeThisRow">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- Trailer Modal -->
+  <div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 8px; border: 1px solid #2a2a2a; box-shadow: 0 10px 30px rgba(0,0,0,0.8);">
+        <div class="modal-header d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #222; background-color: #141414; padding: 15px 20px;">
+          <h5 class="modal-title mb-0" id="modalTitle" style="font-family: 'Oswald', sans-serif; letter-spacing: 1px;">Trailer</h5>
+          <div class="d-flex align-items-center">
+            <a id="externalTrailerBtn" href="#" target="_blank" class="btn btn-sm btn-outline-danger fw-bold d-none me-3" style="border-radius: 4px; font-size: 0.85rem; padding: 6px 12px; transition: all 0.2s;"><i class="bi bi-youtube"></i> Watch on YouTube</a>
+            <button type="button" class="btn-close ms-0" data-bs-dismiss="modal" aria-label="Close" onclick="stopTrailer()"></button>
+          </div>
+        </div>
+        <div class="modal-body p-0" id="trailerContainer" style="background-color: #000;">
+          <!-- Populated dynamically by JS (iframe or interactive fallback card) -->
+        </div>
+        <div class="modal-footer p-2 justify-content-center" style="background-color: #141414; border-top: 1px solid #222; min-height: 40px;">
+          <small class="text-secondary" style="font-size: 0.78rem; font-family: 'DM Sans', sans-serif;">
+            <i class="bi bi-info-circle me-1"></i> Video not playing? Local ISP restrictions or browser security blocks might restrict embeds. Tap the <strong>Watch on YouTube</strong> button to play.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="movie_details.js"></script>
+  <script>
+    window.addEventListener('scroll', () => {
+      if(window.scrollY > 50) {
+        document.getElementById('navbar').classList.add('scrolled');
+      } else {
+        document.getElementById('navbar').classList.remove('scrolled');
+      }
+    });
+  </script>
+</body>
+</html>

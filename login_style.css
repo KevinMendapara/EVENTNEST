@@ -1,0 +1,62 @@
+body {
+  font-family: Arial;
+  background: #EFEDE6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 330px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background: #CD0000;
+  color: white;
+  border: none;
+}
+
+.form { display: none; }
+.form.active { display: block; }
+
+small { color: red; font-size: 12px; }
+
+span {
+  color: #CD0000;
+  cursor: pointer;
+}
+
+/* PASSWORD BOX */
+.password-box {
+  position: relative;
+}
+
+.password-box span {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+/* STRENGTH BAR */
+.strength-bar {
+  height: 6px;
+  background: #ddd;
+}
+
+#strengthBar {
+  height: 100%;
+  width: 0%;
+}

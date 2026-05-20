@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventNest — Book Your Next Experience</title>
+    <meta name="description" content="EventNest — Book tickets for movies, concerts and live events.">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --red: #E50914;
+            --red-h: #f40612;
+            --bg: #050505;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        /* â”€â”€ POSTER WALL â”€â”€ */
+        .poster-wall {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 14px;
+            transform: rotate(-18deg) scale(1.45);
+            transform-origin: center center;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .poster-track {
+            display: flex;
+            gap: 12px;
+            width: max-content;
+        }
+
+        @keyframes goLeft {
+            from {
+                transform: translateX(0);
+            }
+
+            to {
+                transform: translateX(-50%);
+            }
+        }
+
+        @keyframes goRight {
+            from {
+                transform: translateX(-50%);
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .row-1 .poster-track {
+            animation: goLeft 32s linear infinite;
+        }
+
+        .row-2 .poster-track {
+            animation: goRight 40s linear infinite;
+        }
+
+        .row-3 .poster-track {
+            animation: goLeft 25s linear infinite;
+        }
+
+        .poster {
+            width: 108px;
+            height: 160px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            opacity: 0.88;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: brightness(1.1) saturate(1.15);
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .poster img.loaded {
+            opacity: 1;
+        }
+
+        .fallback-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .fallback-content {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 10px 8px;
+        }
+
+        .fallback-content::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.85) 100%);
+            z-index: -1;
+        }
+
+        .fallback-genre {
+            font-family: 'Roboto', sans-serif;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            padding: 3px 6px;
+            border-radius: 12px;
+            align-self: flex-start;
+        }
+
+        .fallback-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 16px;
+            letter-spacing: 1px;
+            color: #fff;
+            line-height: 1.1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        /* â”€â”€ OVERLAYS â”€â”€ */
+        .vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center,
+                    transparent 0%, transparent 18%,
+                    rgba(20, 20, 20, 0.5) 42%,
+                    rgba(20, 20, 20, 0.88) 64%,
+                    rgba(20, 20, 20, 0.97) 83%,
+                    #141414 100%);
+        }
+
+        .fade-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 260px;
+            z-index: 2;
+            pointer-events: none;
+            background: linear-gradient(to bottom, #141414 0%, transparent 100%);
+        }
+
+        .fade-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 260px;
+            z-index: 2;
+            pointer-events: none;
+            background: linear-gradient(to top, #141414 0%, transparent 100%);
+        }
+
+        /* â”€â”€ PAGE LOADER â”€â”€ */
+        .loader {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), visibility 1s;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.05);
+            border-top-color: var(--red);
+            border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* â”€â”€ HERO UI (Glassmorphism) â”€â”€ */
+        .hero-ui {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            padding: 20px;
+        }
+        
+        .hero-content-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            pointer-events: auto;
+            transform: translateY(20px);
+            opacity: 0;
+            animation: popIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+        }
+
+        @keyframes popIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pre-tag {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: var(--red);
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(229, 9, 20, 0.3);
+        }
+
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(80px, 12vw, 140px);
+            letter-spacing: 8px;
+            line-height: 0.9;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8));
+        }
+
+        .logo .r {
+            color: var(--red);
+            text-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
+        }
+
+        .logo .w {
+            background: linear-gradient(180deg, #ffffff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tagline {
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 40px;
+        }
+
+        .enter-btn {
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #fff;
+            background: linear-gradient(135deg, var(--red) 0%, #900000 100%);
+            border: none;
+            border-radius: 50px;
+            padding: 18px 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 30px rgba(229, 9, 20, 0.4), inset 0 2px 0 rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .enter-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: all 0.5s ease;
+        }
+
+        .enter-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(229, 9, 20, 0.6), inset 0 2px 0 rgba(255,255,255,0.2);
+        }
+        
+        .enter-btn:hover::before {
+            left: 100%;
+        }
+
+        .enter-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* â”€â”€ SCROLL HINT â”€â”€ */
+        .scroll-hint {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            animation: popIn 1s ease 1.5s forwards;
+            pointer-events: none;
+        }
+
+        .scroll-hint span {
+            font-size: 10px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .scroll-line {
+            width: 2px;
+            height: 40px;
+            background: linear-gradient(to bottom, var(--red), transparent);
+            border-radius: 2px;
+            animation: slideDown 2s cubic-bezier(0.6, 0.05, 0.15, 0.95) infinite;
+            transform-origin: top;
+        }
+
+        @keyframes slideDown {
+            0% { transform: scaleY(0); opacity: 0; }
+            50% { transform: scaleY(1); opacity: 1; }
+            100% { transform: scaleY(0); opacity: 0; transform-origin: bottom; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- PAGE LOADER -->
+    <div class="loader" id="pageLoader">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="poster-wall" id="posterWall"></div>
+    <div class="vignette"></div>
+    <div class="fade-top"></div>
+    <div class="fade-bottom"></div>
+
+    <div class="hero-ui">
+        <div class="hero-content-box">
+            <div class="pre-tag">Premium Entertainment Platform</div>
+            <div class="logo">
+                <span class="r">EVENT</span><span class="w">NEST</span>
+            </div>
+            <div class="tagline">Movies &nbsp;•&nbsp; Concerts &nbsp;•&nbsp; Live Events</div>
+            <button class="enter-btn" id="enterBtn" onclick="enterSite()">Enter Site</button>
+        </div>
+    </div>
+
+    <div class="scroll-hint">
+        <span>Explore</span>
+        <div class="scroll-line"></div>
+    </div>
+
+    <script>
+        // TMDB base URL (w185 size — efficient for small posters)
+        const TMDB = 'https://image.tmdb.org/t/p/w185';
+
+        // â”€â”€ MOVIE POSTER DATA â”€â”€
+        // Row 1: Hollywood Blockbusters (24 posters)
+        const row1 = [
+            { title: 'Inception', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_.jpg' },
+            { title: 'The Dark Knight', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BMTMxNTMwODM0NF5BMl5BanBnXkFtZTcwODAyMTk2Mw@@._V1_.jpg' },
+            { title: 'Avengers: Endgame', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BMTc5MDE2ODcwNV5BMl5BanBnXkFtZTgwMzI2NzQ2NzM@._V1_.jpg' },
+            { title: 'Interstellar', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BYzdjMDAxZGItMjI2My00ODA1LTlkNzItOWFjMDU5ZDJlYWY3XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'The Batman', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BMmU5NGJlMzAtMGNmOC00YjJjLTgyMzUtNjAyYmE4Njg5YWMyXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Dune', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BNWIyNmU5MGYtZDZmNi00ZjAwLWJlYjgtZTc0ZGIxMDE4ZGYwXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Spider-Man NWH', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BZWM0OWVmNTEtNWVkOS00MzgyLTkyMzgtMmE2ZTZiNjY4MmFiXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Top Gun: Maverick', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BMDBkZDNjMWEtOTdmMi00NmExLTg5MmMtNTFlYTJlNWY5YTdmXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Oppenheimer', genre: 'Drama', img: 'https://m.media-amazon.com/images/M/MV5BN2JkMDc5MGQtZjg3YS00NmFiLWIyZmQtZTJmNTM5MjVmYTQ4XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Avatar 2', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BNWI0Y2NkOWEtMmM2OC00MjQ3LWI1YzItZGQxYzQ3NzI4NWZmXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Barbie', genre: 'Comedy', img: 'https://m.media-amazon.com/images/M/MV5BYjI3NDU0ZGYtYjA2YS00Y2RlLTgwZDAtYTE2YTM5ZjE1M2JlXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'John Wick 4', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BY2Q2ZmI5ZjUtNWVhMC00YzJkLTlmYjMtY2RmZDhkNzEzYjZhXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Black Panther', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BMTg1MTY2MjYzNV5BMl5BanBnXkFtZTgwMTc4NTMwNDI@._V1_.jpg' },
+            { title: 'Doctor Strange', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BNjgwNzAzNjk1Nl5BMl5BanBnXkFtZTgwMzQ2NjI1OTE@._V1_.jpg' },
+            { title: 'The Matrix', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Pulp Fiction', genre: 'Crime', img: 'https://m.media-amazon.com/images/M/MV5BYTViYTE3ZGQtNDBlMC00ZTAyLTkyODMtZGRiZDg0MjA2YThkXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'The Godfather', genre: 'Drama', img: 'https://m.media-amazon.com/images/M/MV5BNGEwYjgwOGQtYjg5ZS00Njc1LTk2ZGEtM2QwZWQ2NjdhZTE5XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Dune Part Two', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BNTc0YmQxMjEtODI5MC00NjFiLTlkMWUtOGQ5NjFmYWUyZGJhXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Deadpool', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BNzY3ZWU5NGQtOTViNC00ZWVmLTliNjAtNzViNzlkZWQ4YzQ4XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Joker', genre: 'Drama', img: 'https://m.media-amazon.com/images/M/MV5BNzY3OWQ5NDktNWQ2OC00ZjdlLThkMmItMDhhNDk3NTFiZGU4XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Mad Max: Fury Road', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BZDRkODJhOTgtOTc1OC00NTgzLTk4NjItNDgxZDY4YjlmNDY2XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Gladiator', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BYWQ4YmNjYjEtOWE1Zi00Y2U4LWI4NTAtMTU0MjkxNWQ1ZmJiXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Blade Runner 2049', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BNzA1Njg4NzYxOV5BMl5BanBnXkFtZTgwODk5NjU3MzI@._V1_.jpg' },
+            { title: 'Tenet', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BNTIzNDIxMzktMzlkMi00MmUyLWFmMjQtZDgwMjBmOGJmNTI3XkEyXkFqcGc@._V1_.jpg' },
+        ];
+
+        // Row 2: Bollywood & South Indian Blockbusters (24 posters)
+        const row2 = [
+            { title: 'RRR', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BNWMwODYyMjQtMTczMi00NTQ1LWFkYjItMGJhMWRkY2E3NDAyXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'KGF Chapter 2', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BZmQzZjVkZTUtYjI4ZC00ZDJmLWI0ZDUtZTFmMGM1Mzc5ZjIyXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Pathaan', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BNDdkNTY1MDQtY2I5MC00OTFlLTg5OWQtZWE2YzE5NWFiMDgzXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Dangal', genre: 'Drama', img: 'https://m.media-amazon.com/images/M/MV5BMTQ4MzQzMzM2Nl5BMl5BanBnXkFtZTgwMTQ1NzU3MDI@._V1_.jpg' },
+            { title: 'Baahubali 2', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BNTRhYTlhZTgtYmMyYy00NWI4LTk4MzItOWM2YjBmYTg2OTI2XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Jawan', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BMGExNGI1NDktOWI2Mi00NDM3LWIxMmQtNTQxYTgzMzI0MTA1XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Animal', genre: 'Crime', img: 'https://m.media-amazon.com/images/M/MV5BY2U5YTliZDktZWFhZS00ZDI3LTk5MWMtMDFlMjA3MDI2MGMwXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Brahmastra', genre: 'Fantasy', img: 'https://m.media-amazon.com/images/M/MV5BZjZiOTE2Y2ItMTY4My00ZjE0LTlkZTAtYWY4M2I4OTVkMjQ5XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'War', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BMmM1ZTc5ZTYtOTM2My00MjBmLWE5NzktYzkyYzdlYWE3ZDAzXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Pushpa', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BNDM3N2UzM2UtMjEwMC00NGUzLThmMmQtNGMyM2VmMDA0ZWEwXkEyXkFqcGc@._V1_.jpg' },
+            { title: '3 Idiots', genre: 'Comedy', img: 'https://m.media-amazon.com/images/M/MV5BNzc4ZWQ3NmYtODE0Ny00YTQ4LTlkZWItNTBkMGQ0MmUwMmJlXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Vikram', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BNDEyMWQ0ZDktNTY0MC00YWRkLWFlMjQtMDUxMjRlMDhmMmRlXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Leo', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BMjdiNmZhNzctMjEzNi00OGM4LWEzYTctZWYxNzY5NTBjZTYzXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Salaar', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BYzU2MzZiOTEtZTgwOS00MTdlLWJmMDQtNjdjOGIxYTA0NTYxXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'DDLJ', genre: 'Romance', img: 'https://m.media-amazon.com/images/M/MV5BMDQyMDI4ZGMtYjI5MS00YTk1LTk3ZDgtZTA3MzQ5YWQ4Y2Q4XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Sultan', genre: 'Drama', img: 'https://m.media-amazon.com/images/M/MV5BMmM4NzJjNTQtZGU0Mi00NmJhLTkxMWQtYThiYjA2YjlhMjRkXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Kabir Singh', genre: 'Romance', img: 'https://m.media-amazon.com/images/M/MV5BNjU5ZTljMDEtNzg5Ny00OTliLWI3NmYtOTE1ZDg3NTNkMDM0XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Uri', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BZDY4ZmZhNzMtNjdkMC00NTE3LWFjYzQtOGE4OTllOGY1NTk5XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Kantara', genre: 'Thriller', img: 'https://m.media-amazon.com/images/M/MV5BNDU2ZTYxYTMtMjhlZC00ZjEwLThhNDUtMzdlNWM4ZDcyYTM1XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Drishyam', genre: 'Thriller', img: 'https://m.media-amazon.com/images/M/MV5BMDRlZWFkMjEtYmYyZi00MmE5LWIzMzUtYmM2N2M5Y2UxZDJjXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Lagaan', genre: 'Drama', img: 'https://m.media-amazon.com/images/M/MV5BM2FmODM4OTktOTRjOS00ZTIzLWIzZjAtMDBhOGEzYThkNzMzXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Sholay', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BNmI1NTRmMWQtNDJlZC00MGIzLWEwYzctYTQwNTI2NWNjM2MwXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Baahubali', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BM2YxZThhZmEtYzM0Yi00OWYxLWI4NGYtM2Y2ZDNmOGE0ZWQzXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'KGF Chapter 1', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BM2M0YmIxNzItOWI4My00MmQzLWE0NGYtZTM3NjllNjIwZjc5XkEyXkFqcGc@._V1_.jpg' },
+        ];
+
+        // Row 3: Mixed Hollywood & Bollywood (24 posters)
+        const row3 = [
+            { title: 'Guardians Vol.3', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BOTJhOTMxMmItZmE0Ny00MDc3LWEzOGEtOGFkMzY4MWYyZDQ0XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Fast X', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BYzEwZjczOTktYzU1OS00YjJlLTgyY2UtNWEzODBlN2RjZDEwXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Mission Impossible', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BZGQ5NGEyYTItMjNiMi00Y2EwLTkzOWItMjc5YjJiMjMyNTI0XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Tiger 3', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BMGQ1MzkzZDYtMzg1YS00ODE0LTgyYTYtNDdkOWNjMDFhMmZjXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Thor Love & Thunder', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BZjRiMDhiZjQtNjk5Yi00ZDcwLTkyYTEtMDc1NjdmNjFhNGIzXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Black Panther 2', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BYWY5NDY1ZjItZDQxMy00MTAzLTgyOGQtNTQxYjFiMzZjMjUyXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Ant-Man 3', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BMThkYWY5ZjQtYjJlMS00MDFmLWFkYzEtODEzZjg5YWFmMGY4XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'The Flash', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BMjU0ZjZhNDQtMDhkYi00OWQyLWE3NGYtNzBlY2VmM2I4ZDg5XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Indiana Jones 5', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BYWJlOWE2ZjEtZGRhOC00M2YzLWFkZGEtYzIzZWI2Zjg3NWYxXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Aquaman 2', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BYjQ1ZTUzMWMtY2VkNS00ZDRjLWEwODYtYmFkMWJiNTQxMDUzXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Killers Flower Moon', genre: 'Drama', img: 'https://m.media-amazon.com/images/M/MV5BZWY5ZDVjNTUtODI5Yy00MjFhLWEyM2EtYzZjM2VjZTI0MTBjXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Wonka', genre: 'Fantasy', img: 'https://m.media-amazon.com/images/M/MV5BM2Y1N2ZhNjctYjVhZC00MDg2LWFhNTItMzI3ZjAwZDhjYmFiXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Adipurush', genre: 'Fantasy', img: 'https://m.media-amazon.com/images/M/MV5BMjA2ODRkMGUtNzUxNC00MmM5LTk3YjQtNTkxNTFlNzFiMjNiXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'HanuMan', genre: 'Fantasy', img: 'https://m.media-amazon.com/images/M/MV5BNzVhNjQ3YzgtMDNjYi00Nzc1LWFlMGYtNGQxMTczNmQ3ZDMxXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Dunki', genre: 'Drama', img: 'https://m.media-amazon.com/images/M/MV5BMThhZjM4M2UtYmE1NC00YTMzLTk3ZTAtNmQ1ZmI4YmRmZGE1XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Jailer', genre: 'Action', img: 'https://m.media-amazon.com/images/M/MV5BMDBmZmU4ZDEtNTE1Ni00YjY4LTg2ZmYtZjM2MDQ4NGQ3ZTNlXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Varisu', genre: 'Drama', img: 'https://m.media-amazon.com/images/M/MV5BZDM4NDBkNGEtNzI2Yi00ODkwLTliNzAtODkwMmRhNTEzZmVlXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'The Marvels', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BYzczOWM4MzItMWMyOS00ZDczLWIxMzctNzBmYTgzOTI1MzI3XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Jurassic World', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BNjg2NTcwYWQtYzk4NS00MTJhLWEzZjItMzIxNjk3YzlkYzU0XkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Transformers', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BZjM3ZDA2YmItMzhiMi00ZGI3LTg3ZGQtOTk3Nzk0MDY0ZDZhXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Godzilla vs Kong', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BMjZlYjUwZjItZmQ1ZS00NDU2LWFhNWMtMGRmMmZiMzliY2NhXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Pacific Rim', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BMTY3MTI5NjQ4Nl5BMl5BanBnXkFtZTcwOTU1OTU0OQ@@._V1_.jpg' },
+            { title: 'Alita: Battle Angel', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BYmZhZGQzM2MtMWEyZC00YTU1LTk4YTQtMTg3ZjEzM2U1NTkxXkEyXkFqcGc@._V1_.jpg' },
+            { title: 'Edge of Tomorrow', genre: 'Sci-Fi', img: 'https://m.media-amazon.com/images/M/MV5BMTc5OTk4MTM3M15BMl5BanBnXkFtZTgwODcxNjg3MDE@._V1_.jpg' },
+        ];
+
+        // Fallback gradient classes when images fail
+        const FALLBACKS = [
+            'linear-gradient(145deg,#1a0533,#2d1460)',
+            'linear-gradient(145deg,#031a1a,#0a4a4a)',
+            'linear-gradient(145deg,#1a0505,#4a0e0e)',
+            'linear-gradient(145deg,#050520,#1a1a6a)',
+            'linear-gradient(145deg,#031208,#0a3a18)',
+            'linear-gradient(145deg,#1a0515,#4a0a30)',
+            'linear-gradient(145deg,#1a1005,#4a2c00)',
+            'linear-gradient(145deg,#020820,#0a1a50)',
+        ];
+
+        function buildRow(movies, rowClass) {
+            const rowEl = document.createElement('div');
+            rowEl.className = `poster-row ${rowClass}`;
+
+            const track = document.createElement('div');
+            track.className = 'poster-track';
+
+            // Duplicate for seamless infinite loop
+            [...movies, ...movies].forEach((m, i) => {
+                const card = document.createElement('div');
+                card.className = 'poster';
+
+                // Set rich fallback immediately
+                const fallbackBg = document.createElement('div');
+                fallbackBg.className = 'fallback-bg';
+                fallbackBg.style.background = FALLBACKS[i % FALLBACKS.length];
+
+                const fallbackContent = document.createElement('div');
+                fallbackContent.className = 'fallback-content';
+                fallbackContent.innerHTML = `
+            <span class="fallback-genre">${m.genre}</span>
+            <span class="fallback-title">${m.title}</span>
+        `;
+
+                card.appendChild(fallbackBg);
+                card.appendChild(fallbackContent);
+
+                // Preload image in background
+                const img = new Image();
+                let proxyAttempts = [];
+                if (m.img && m.img.startsWith('http')) {
+                    const cleanUrl = m.img.replace(/^https?:\/\//, '');
+                    proxyAttempts = [
+                        m.img,
+                        `https://i0.wp.com/${cleanUrl}`,
+                        `https://i1.wp.com/${cleanUrl}`,
+                        `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}`,
+                        `https://wsrv.nl/?url=${encodeURIComponent(cleanUrl)}`
+                    ];
+                } else {
+                    proxyAttempts = [m.img || ''];
+                }
+
+                let attemptIndex = 0;
+
+                img.onload = () => {
+                    img.alt = m.title;
+                    card.appendChild(img);
+                    // Slight delay to ensure DOM paint before opacity transition
+                    requestAnimationFrame(() => {
+                        img.classList.add('loaded');
+                    });
+                };
+                img.onerror = () => {
+                    attemptIndex++;
+                    if (attemptIndex < proxyAttempts.length) {
+                        img.src = proxyAttempts[attemptIndex];
+                    } else {
+                        img.onerror = null;
+                        img.remove();
+                    }
+                };
+                img.src = proxyAttempts[0];
+
+                track.appendChild(card);
+            });
+
+            rowEl.appendChild(track);
+            return rowEl;
+        }
+
+        const wall = document.getElementById('posterWall');
+        wall.appendChild(buildRow(row1, 'row-1'));
+        wall.appendChild(buildRow(row2, 'row-2'));
+        wall.appendChild(buildRow(row3, 'row-3'));
+
+        // â”€â”€ PAGE LOADER â”€â”€
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('pageLoader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.visibility = 'hidden', 1000);
+                }
+            }, 600); // Allow some posters to load before hiding spinner
+        });
+
+
+
+        // â”€â”€ ENTER SITE TRANSITION â”€â”€
+        function enterSite() {
+            document.body.style.transition = 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+            document.body.style.opacity = '0';
+            setTimeout(() => { window.location.href = "index.html"; }, 620);
+        }
+    </script>
+</body>
+
+</html>

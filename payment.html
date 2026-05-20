@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Payment</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase_config.js"></script>
+
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .payment-container {
+            background: #141414;
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .summary-box {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .nav-pills .nav-link {
+            color: #aaa;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .nav-pills .nav-link:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-pills .nav-link.active {
+            background-color: #E50914;
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+        }
+
+        .form-control {
+            background-color: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 14px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            background-color: #2a2a2a;
+            border-color: #E50914;
+            box-shadow: 0 0 0 0.25rem rgba(229, 9, 20, 0.25);
+            color: #fff;
+        }
+        .form-control::placeholder {
+            color: #777;
+        }
+
+        .error {
+            color: #E50914;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: block;
+        }
+
+        .btn-pay {
+            background-color: #E50914;
+            color: white;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .btn-pay:hover {
+            background-color: #b20710;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(229, 9, 20, 0.4);
+        }
+        .btn-pay:disabled {
+            background-color: #555;
+            transform: none;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .success-box {
+            display: none;
+            text-align: center;
+            animation: zoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .qr-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="payment-container" id="paymentForm">
+        <h2 class="fw-bold mb-4 d-flex align-items-center">
+            <i class="bi bi-shield-lock-fill text-danger me-3"></i> Secure Checkout
+        </h2>
+
+        <div class="summary-box">
+            <h5 class="fw-bold mb-3 border-bottom border-secondary pb-2">Order Summary</h5>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Total Seats Selected</span>
+                <span class="fw-bold text-white"><span id="seatCount">0</span> Seat(s)</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Seat Numbers</span>
+                <span class="fw-bold text-white text-end" id="seats">...</span>
+            </div>
+            <div class="d-flex justify-content-between mb-3 border-bottom border-secondary pb-3">
+                <span class="text-secondary">Average Price per Seat</span>
+                <span class="fw-bold text-white">Rs. <span id="pricePerSeat">0</span></span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <span class="text-secondary">Total Amount</span>
+                <h4 class="mb-0 fw-bold text-danger">Rs. <span id="amount">0</span></h4>
+            </div>
+        </div>
+
+        <ul class="nav nav-pills nav-justified mb-4" id="paymentTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" onclick="showTab('card', this)">
+                    <i class="bi bi-credit-card me-2"></i>Card
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" onclick="showTab('upi', this)">
+                    <i class="bi bi-phone me-2"></i>UPI
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" onclick="showTab('qr', this)">
+                    <i class="bi bi-qr-code-scan me-2"></i>QR
+                </button>
+            </li>
+        </ul>
+
+        <div id="card" class="payment-section">
+            <div class="mb-3">
+                <input type="text" class="form-control" id="cardNumber" placeholder="Card Number (16 digits)">
+                <span class="error" id="cardError"></span>
+            </div>
+            <div class="mb-3">
+                <input type="text" class="form-control" placeholder="Card Holder Name">
+            </div>
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <input type="text" class="form-control" id="expiry" placeholder="MM/YY">
+                    <span class="error" id="expiryError"></span>
+                </div>
+                <div class="col-6 mb-3">
+                    <input type="password" class="form-control" id="cvv" placeholder="CVV">
+                    <span class="error" id="cvvError"></span>
+                </div>
+            </div>
+        </div>
+
+        <div id="upi" class="payment-section" style="display:none;">
+            <div class="mb-4">
+                <input type="text" class="form-control form-control-lg" id="upiId" placeholder="example@upi">
+                <span class="error" id="upiError"></span>
+            </div>
+        </div>
+
+        <div id="qr" class="payment-section text-center mb-4" style="display:none;">
+            <p class="text-secondary mb-3">Scan with any UPI app to pay</p>
+            <div class="qr-container">
+                <canvas id="qrCanvas"></canvas>
+            </div>
+        </div>
+
+        <button class="btn-pay mt-2" onclick="payNow()" id="payBtn">Pay Securely</button>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="payment-container success-box" id="successBox">
+        <i class="bi bi-check-circle-fill success-icon"></i>
+        <h2 class="fw-bold mb-3">Payment Successful!</h2>
+        <p class="text-secondary mb-4">Your booking is confirmed. Check your email for details.</p>
+        <button onclick="downloadTicket()" class="btn btn-outline-light w-100 py-3 rounded-3 fw-bold">
+            <i class="bi bi-download me-2"></i> Download Ticket
+        </button>
+        <button onclick='window.location.href="index.html"' class="btn btn-link text-secondary text-decoration-none w-100 mt-2">
+            Back to Home
+        </button>
+    </div>
+
+    <script>
+        // LOAD DATA
+        let amount = localStorage.getItem("amount") || "0";
+        let seats = localStorage.getItem("seats");
+        let seatCount = 0;
+        
+        try {
+            let parsedSeats = JSON.parse(seats);
+            if(Array.isArray(parsedSeats)) {
+                seatCount = parsedSeats.length;
+                seats = parsedSeats.join(", ");
+            }
+        } catch(e) {}
+
+        let pricePerSeat = seatCount > 0 ? (Number(amount) / seatCount).toFixed(0) : 0;
+
+        document.getElementById("amount").innerText = amount;
+        document.getElementById("seats").innerText = seats || "None";
+        document.getElementById("seatCount").innerText = seatCount;
+        document.getElementById("pricePerSeat").innerText = pricePerSeat;
+
+        // QR
+        QRCode.toCanvas(document.getElementById("qrCanvas"), "upi://pay?pa=eventbooking@upi&am=" + amount, { width: 200, margin: 1 });
+
+        // TAB SWITCH
+        function showTab(tabId, btnElement) {
+            document.querySelectorAll(".payment-section").forEach(s => s.style.display = "none");
+            document.querySelectorAll(".nav-link").forEach(b => b.classList.remove("active"));
+            
+            document.getElementById(tabId).style.display = "block";
+            btnElement.classList.add("active");
+        }
+
+        // VALIDATION
+        function validateCard() {
+            let card = document.getElementById("cardNumber").value;
+            let expiry = document.getElementById("expiry").value;
+            let cvv = document.getElementById("cvv").value;
+            let valid = true;
+
+            if (card.length < 16 || isNaN(card.replace(/\s/g, ''))) {
+                document.getElementById("cardError").innerText = "Please enter a valid 16-digit card number";
+                valid = false;
+            } else document.getElementById("cardError").innerText = "";
+
+            if (!expiry.match(/^(0[1-9]|1[0-2])\/\d{2}$/)) {
+                document.getElementById("expiryError").innerText = "Invalid format (MM/YY)";
+                valid = false;
+            } else document.getElementById("expiryError").innerText = "";
+
+            if (cvv.length < 3 || isNaN(cvv)) {
+                document.getElementById("cvvError").innerText = "Invalid CVV";
+                valid = false;
+            } else document.getElementById("cvvError").innerText = "";
+
+            return valid;
+        }
+
+        // PAYMENT
+        function payNow() {
+            let activeTab = document.querySelector(".nav-link.active").innerText.trim();
+            let isValid = true;
+
+            if (activeTab === "Card") isValid = validateCard();
+            if (activeTab === "UPI") isValid = validateUPI();
+
+            if (!isValid) return;
+
+            let btn = document.getElementById("payBtn");
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                let amount = localStorage.getItem("amount");
+                let seatsRaw = localStorage.getItem("seats");
+                let user = localStorage.getItem("loggedInUser") || "Guest";
+                
+                // Get event details
+                let eventTitle = "Event Ticket";
+                let eventCat = "Booking";
+                let eventImg = "https://via.placeholder.com/400x200";
+                
+                let cdStr = localStorage.getItem("concertData");
+                let movieStr = localStorage.getItem("movie");
+                let cricketStr = localStorage.getItem("cricketMatch");
+                if (cdStr) {
+                    let cd = JSON.parse(cdStr);
+                    eventTitle = cd.name || cd.title || eventTitle;
+                    eventCat = cd.category || "Live Event";
+                    eventImg = cd.img || cd.image || eventImg;
+                } else if (movieStr) {
+                    let mv = JSON.parse(movieStr);
+                    eventTitle = mv.title || eventTitle;
+                    eventCat = "Movie";
+                    eventImg = mv.poster || mv.image || eventImg;
+                } else if (cricketStr) {
+                    let cr = JSON.parse(cricketStr);
+                    eventTitle = cr.title || eventTitle;
+                    eventCat = "Cricket Match";
+                    eventImg = cr.team1Logo || eventImg;
+                }
+
+                let order = {
+                    id: "ORD" + Math.floor(100000 + Math.random() * 900000),
+                    user: user,
+                    title: eventTitle,
+                    category: eventCat,
+                    image: eventImg,
+                    seats: seatsRaw,
+                    amount: amount,
+                    date: new Date().toLocaleString()
+                };
+
+                if (typeof supabaseClient !== 'undefined' && !SUPABASE_URL.includes('YOUR-PROJECT-ID')) {
+                    supabaseClient.from('orders').insert([order]).then(({data, error}) => {
+                        if(error) console.error("Supabase Error:", error);
+                        showSuccessUI();
+                    });
+                } else {
+                    let orders = JSON.parse(localStorage.getItem("orders")) || [];
+                    orders.push(order);
+                    localStorage.setItem("orders", JSON.stringify(orders));
+                    showSuccessUI();
+                }
+
+                function showSuccessUI() {
+                    // SHOW SUCCESS UI
+                    document.getElementById("paymentForm").style.display = "none";
+                    document.getElementById("successBox").style.display = "block";
+                }
+            }, 2000);
+        }
+
+        function downloadTicket() {
+            let rawSeats = localStorage.getItem("seats");
+            let seatsList = rawSeats;
+            try {
+                let parsed = JSON.parse(rawSeats);
+                if(Array.isArray(parsed)) seatsList = parsed.join(", ");
+            } catch(e) {}
+            
+            let amt = localStorage.getItem("amount");
+
+            let content = `
+=================================
+      🎟️ EVENT TICKET 🎟️      
+=================================
+Status:    CONFIRMED
+Seats:     ${seatsList}
+Amount:    Rs. ${amt}
+Date:      ${new Date().toLocaleDateString()}
+=================================
+Enjoy the show!
+            `;
+
+            let blob = new Blob([content], { type: "text/plain" });
+            let a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "Event_Ticket.txt";
+            a.click();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventNest - Sign In</title>
+  <!-- Social Login SDKs -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --primary-red: #E50914;
+      --dark-bg: #000000;
+      --panel-bg: #000000;
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      display: flex;
+      min-height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .split-layout {
+      display: flex;
+      width: 100vw;
+      min-height: 100vh;
+    }
+
+    /* --- LEFT PANEL --- */
+    .left-panel {
+      flex: 1.2;
+      position: relative;
+      background: url('main_hero.png') center/cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 60px;
+    }
+    
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(20,20,20,0.4) 100%);
+    }
+
+    .hanging-sign-container {
+      position: absolute;
+      top: -10px;
+      left: 60px;
+      z-index: 10;
+      transform-origin: top center;
+      animation: swing 3s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite alternate;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @keyframes swing {
+      0% { transform: perspective(800px) rotateZ(4deg) rotateY(15deg); }
+      100% { transform: perspective(800px) rotateZ(-4deg) rotateY(-15deg); }
+    }
+
+    .rope {
+      width: 3px;
+      height: 60px;
+      background: repeating-linear-gradient(
+        -45deg,
+        #6e4a2d,
+        #6e4a2d 2px,
+        #4a301a 2px,
+        #4a301a 4px
+      );
+      position: absolute;
+      top: 0;
+      box-shadow: 2px 0 4px rgba(0,0,0,0.5);
+    }
+    
+    .rope-left { left: 20%; }
+    .rope-right { right: 20%; }
+
+    .brand-logo-sign {
+      margin-top: 55px;
+      background: linear-gradient(145deg, #1f1f1f, #0a0a0a);
+      border: 1px solid #333;
+      padding: 12px 25px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 1px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.7), inset 0 2px 2px rgba(255,255,255,0.05);
+      position: relative;
+    }
+
+    .brand-logo-sign::before, .brand-logo-sign::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      width: 8px;
+      height: 8px;
+      background: #888;
+      border-radius: 50%;
+      box-shadow: inset 1px 1px 3px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.2);
+    }
+    
+    .brand-logo-sign::before { left: 20%; transform: translateX(-50%); }
+    .brand-logo-sign::after { right: 20%; transform: translateX(50%); }
+
+    .brand-logo-sign span { color: var(--primary-red); }
+
+    .left-content {
+      position: relative;
+      z-index: 2;
+      max-width: 500px;
+    }
+    
+    .left-content h1 {
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(to right, #fff, rgba(255,255,255,0.7));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: fadeUp 1s ease-out;
+    }
+
+    .left-content p {
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.8);
+      line-height: 1.6;
+      animation: fadeUp 1s ease-out 0.2s both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+
+    .right-panel {
+      flex: 1;
+      max-width: 550px;
+      background: #0a0a0a;
+      padding: 60px 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    .right-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(229, 9, 20, 0.05) 0%, transparent 40%);
+      pointer-events: none;
+    }
+
+    .form-container {
+      width: 100%;
+      position: relative;
+      z-index: 2;
+    }
+
+    .form-container h2 {
+      font-size: 2.4rem;
+      margin-bottom: 8px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .form-container p.subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      margin-bottom: 40px;
+      line-height: 1.5;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 16px 18px;
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--primary-red);
+      background: #1a1a1a;
+      box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.15);
+    }
+
+    .input-group input::placeholder {
+      color: #666;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #777;
+      font-size: 1.2rem;
+      user-select: none;
+      transition: color 0.2s;
+    }
+
+    .password-toggle:hover {
+      color: #fff;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .checkbox-group input {
+      accent-color: var(--primary-red);
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: var(--primary-red);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: #f6121d;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(229, 9, 20, 0.5);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      background: #b20710;
+    }
+
+    .form-footer {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    .form-footer span {
+      color: #fff;
+      cursor: pointer;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .form-footer span:hover {
+      color: var(--primary-red);
+      text-decoration: underline;
+    }
+
+    .social-divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 18px 0;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .social-divider::before,
+    .social-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .social-divider span {
+      padding: 0 10px;
+    }
+
+    .social-buttons {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 24px;
+      height: 40px;
+    }
+
+    .g-btn-wrapper {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #111;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #2a2a2a;
+    }
+
+    .g-btn-wrapper:hover {
+      border-color: #555;
+    }
+
+    .btn-social {
+      flex: 1;
+      height: 100%;
+      padding: 0;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-social svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-social:hover {
+      background: #1a1a1a;
+      border-color: #555;
+    }
+
+    .form-section {
+      display: none;
+    }
+
+    .form-section.active {
+      display: block;
+      animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .strength-bar {
+      height: 4px;
+      background: #333;
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    #strengthBar {
+      height: 100%;
+      width: 0%;
+      transition: all 0.3s ease;
+    }
+
+    small {
+      color: var(--primary-red);
+      font-size: 12px;
+      display: block;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 900px) {
+      .split-layout {
+        flex-direction: column;
+      }
+
+      .left-panel {
+        display: none;
+      }
+
+      .right-panel {
+        width: 100%;
+        border-left: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="split-layout">
+    <!-- LEFT PANEL: Cinematic Image -->
+    <div class="left-panel">
+      <div class="hanging-sign-container">
+        <div class="rope rope-left"></div>
+        <div class="rope rope-right"></div>
+        <div class="brand-logo-sign">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#E50914" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 30px; height: 30px;">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Event<span>Nest</span>
+        </div>
+      </div>
+      
+      <div class="left-content">
+        <h1>Experience the Extraordinary.</h1>
+        <p>Your one-stop destination for the most sought-after concerts, blockbuster movies, creative workshops, and tech seminars. Book your journey today.</p>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Forms -->
+    <div class="right-panel">
+      <div class="form-container">
+
+        <!-- SIGN IN FORM -->
+        <form id="loginForm" class="form-section active">
+          <h2>Sign In</h2>
+          <p class="subtitle">Welcome back. Ready for your next experience?</p>
+
+          <div class="input-group">
+            <input type="email" id="loginEmail" placeholder="Email or phone number" required>
+            <small></small>
+          </div>
+
+          <div class="input-group">
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <span class="password-toggle" onclick="togglePassword('loginPassword')">👁️</span>
+            <small></small>
+          </div>
+
+          <label class="checkbox-group">
+            <input type="checkbox" id="rememberMe">
+            Remember me
+          </label>
+
+          <button type="submit" class="btn-primary">Sign In</button>
+
+          <div class="social-divider">
+            <span>or continue with</span>
+          </div>
+          
+          <div class="social-buttons">
+            <div class="g-btn-wrapper">
+              <div id="g_id_signin_login"></div>
+            </div>
+            <button type="button" class="btn-social" onclick="handleAppleLogin()">
+              <svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16.36 10.96c-.03-2.73 2.22-4.04 2.33-4.1-1.27-1.85-3.23-2.1-3.95-2.13-1.68-.17-3.28.99-4.14.99-.86 0-2.17-1-3.55-.97-1.8.03-3.46 1.05-4.38 2.67-1.89 3.29-.48 8.16 1.35 10.82.9 1.3 1.95 2.75 3.34 2.7 1.34-.05 1.85-.86 3.47-.86 1.6 0 2.08.86 3.49.83 1.44-.03 2.35-1.32 3.24-2.63.13-.19.25-.39.37-.59 1.02-1.5 1.44-2.95 1.46-3.03-.03-.02-2.83-1.08-2.85-3.83zM15.02 4.67c.74-.9 1.23-2.14 1.09-3.38-1.08.05-2.38.72-3.14 1.62-.68.8-.13 1.99 0 3.12 1.15.09 2.29-.62 3.05-1.36z"/>
+              </svg>
+              Apple
+            </button>
+          </div>
+
+          <div class="form-footer">
+            New to EventNest? <span onclick="showRegister()">Sign up now.</span>
+          </div>
+        </form>
+
+        <!-- SIGN UP FORM -->
+        <form id="registerForm" class="form-section">
+          <h2>Sign Up</h2>
+          <p class="subtitle">Join EventNest and discover the best events.</p>
+
+          <div class="input-group">
+            <input type="text" id="name" placeholder="Full Name" required>
+            <small></small>
+          </div>
+
+          <div class="input-group">
+            <input type="email" id="email" placeholder="E-mail" required>
+            <small></small>
+          </div>
+
+          <div class="input-group">
+            <input type="number" id="age" placeholder="Age" required>
+            <small></small>
+          </div>
+
+          <div class="input-group">
+            <input type="password" id="password" placeholder="Password" required>
+            <span class="password-toggle" onclick="togglePassword('password')">👁️</span>
+            <div class="strength-bar">
+              <div id="strengthBar"></div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+            <span class="password-toggle" onclick="togglePassword('confirmPassword')">👁️</span>
+          </div>
+
+          <label class="checkbox-group">
+            <input type="checkbox" required>
+            I agree to the terms of Service
+          </label>
+
+          <button type="submit" class="btn-primary">Create Account</button>
+
+          <div class="social-divider">
+            <span>or continue with</span>
+          </div>
+          
+          <div class="social-buttons">
+            <div class="g-btn-wrapper">
+              <div id="g_id_signin_register"></div>
+            </div>
+            <button type="button" class="btn-social" onclick="handleAppleLogin()">
+              <svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16.36 10.96c-.03-2.73 2.22-4.04 2.33-4.1-1.27-1.85-3.23-2.1-3.95-2.13-1.68-.17-3.28.99-4.14.99-.86 0-2.17-1-3.55-.97-1.8.03-3.46 1.05-4.38 2.67-1.89 3.29-.48 8.16 1.35 10.82.9 1.3 1.95 2.75 3.34 2.7 1.34-.05 1.85-.86 3.47-.86 1.6 0 2.08.86 3.49.83 1.44-.03 2.35-1.32 3.24-2.63.13-.19.25-.39.37-.59 1.02-1.5 1.44-2.95 1.46-3.03-.03-.02-2.83-1.08-2.85-3.83zM15.02 4.67c.74-.9 1.23-2.14 1.09-3.38-1.08.05-2.38.72-3.14 1.62-.68.8-.13 1.99 0 3.12 1.15.09 2.29-.62 3.05-1.36z"/>
+              </svg>
+              Apple
+            </button>
+          </div>
+
+          <div class="form-footer">
+            Already a member? <span onclick="showLogin()">Sign in</span>
+          </div>
+        </form>
+
+        <!-- OTP VERIFICATION FORM -->
+        <form id="otpForm" class="form-section">
+          <h2>Verify Account</h2>
+          <p class="subtitle">Enter the 4-digit code sent to your email.</p>
+
+          <div class="input-group">
+            <input type="number" id="otpInput" placeholder="Enter OTP" required>
+            <small></small>
+          </div>
+
+          <button type="submit" class="btn-primary">Verify</button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase_config.js"></script>
+    <script src="login_script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,86 @@
+/* SAME STYLE AS CONCERT GRID */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 30px;
+}
+
+.movie-card {
+    background: var(--card);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: 0.4s;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.movie-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    z-index: 10;
+}
+
+.movie-img {
+    height: 400px;
+    width: 100%;
+    object-fit: cover;
+}
+
+.movie-content {
+    padding: 20px;
+    text-align: left;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.movie-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    color: #fff;
+}
+
+.movie-meta {
+    color: var(--subtext);
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.movie-rating {
+    color: #f5c518; /* IMDB yellow */
+    font-weight: 600;
+}
+
+.book-btn {
+    width: 100%;
+    padding: 10px;
+    border-radius: 4px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-weight: 500;
+    transition: 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+}
+
+.book-btn:hover {
+    background: var(--primary-dark);
+}
+
+.movie-hero {
+    height: 60vh !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}

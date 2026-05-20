@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <title>Your Orders</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+        }
+
+        .order-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-info h3 {
+            margin: 0;
+        }
+
+        .order-info p {
+            margin: 5px 0;
+        }
+
+        button {
+            border-radius: 25px;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>🎟️ Your Orders</h1>
+
+        <div id="ordersList"></div>
+
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase_config.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            let user = localStorage.getItem("loggedInUser") || "Guest";
+            let orders = [];
+
+            if (typeof supabaseClient !== 'undefined' && !SUPABASE_URL.includes('YOUR-PROJECT-ID')) {
+                const { data, error } = await supabaseClient
+                    .from('orders')
+                    .select('*')
+                    .eq('user', user)
+                    .order('date', { ascending: false });
+                
+                if (!error) orders = data;
+            } else {
+                let allOrders = JSON.parse(localStorage.getItem("orders")) || [];
+                orders = allOrders.filter(o => o.user === user);
+            }
+
+            let container = document.getElementById("ordersList");
+
+            if (orders.length === 0) {
+                container.innerHTML = "<p>No bookings yet</p>";
+                return;
+            }
+
+            orders.forEach((o, i) => {
+                let parsedSeats = o.seats;
+                try {
+                    let s = JSON.parse(o.seats);
+                    if(Array.isArray(s)) parsedSeats = s.join(", ");
+                } catch(e){}
+
+                container.innerHTML += `
+                <div class="order-card">
+                    <div class="order-info">
+                        <h3>🎟️ ${o.title || 'Event Booking'}</h3>
+                        <p>Category: ${o.category || 'Event'}</p>
+                        <p>Seats: ${parsedSeats}</p>
+                        <p>Amount: ₹${o.amount}</p>
+                        <p>${o.date}</p>
+                    </div>
+                    <div>
+                        <button onclick="downloadTicket('${parsedSeats}', '${o.amount}', '${o.title}')" style="background: #E50914; border: none; color: white; padding: 10px 20px; cursor: pointer;">
+                            📥 Download
+                        </button>
+                    </div>
+                </div>
+                `;
+            });
+        });
+
+        async function downloadTicket(seats, amount, title) {
+            if (typeof window.jspdf === 'undefined' || !window.jspdf.jsPDF) {
+                alert("PDF generation library is loading. Please try again in a moment.");
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.text("🎟️ EVENT TICKET", 20, 20);
+
+            doc.setFontSize(12);
+            doc.text("Event: " + (title !== 'undefined' ? title : "Concert"), 20, 40);
+            doc.text("Seats: " + seats, 20, 50);
+            doc.text("Amount: ₹" + amount, 20, 60);
+            doc.text("Status: Confirmed", 20, 70);
+
+            doc.text("Enjoy your show 🎉", 20, 90);
+
+            doc.save("ticket.pdf");
+        }
+    </script>
+</body>
+</html>
